@@ -39,3 +39,6 @@
 
 // Failed to resolve the specified provider
 #define SEALIGHTER_ERROR_NO_PROVIDER 14
+
+// Failed to create stop event
+#define SEALIGHTER_ERROR_EVENT_CREATION_FAILED 15

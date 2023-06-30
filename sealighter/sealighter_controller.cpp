@@ -772,6 +772,50 @@ int add_user_traces
 
 
 /*
+    Stop any running trace
+*/
+void stop_sealighter()
+{
+    if (NULL != g_user_session) {
+        g_user_session->stop();
+    }
+    if (NULL != g_kernel_session) {
+        g_kernel_session->stop();
+    }
+}
+
+
+void event_listener(HANDLE stop_event)
+{
+    // Wait until the event is signaled and stop the program
+    DWORD wait_result = ::WaitForSingleObject(stop_event, INFINITE);
+
+    if (WAIT_OBJECT_0 == wait_result)
+        stop_sealighter();
+    else
+        log_messageA("Failed waiting for event, wait_result: %ul, error: %ul\n", wait_result, ::GetLastError());
+
+    ::CloseHandle(stop_event);
+}
+
+
+int start_event_listener_thread(const std::string& stop_event_name)
+{
+    HANDLE stop_event = ::CreateEventA(NULL, TRUE, FALSE, stop_event_name.c_str());
+    if (stop_event == NULL)
+    {
+        log_messageW(L"Failed creating event \"%s\", error: %ul\n", ::GetLastError());
+        return SEALIGHTER_ERROR_EVENT_CREATION_FAILED;
+    }
+
+    // Let the thread run in the background
+    std::thread(event_listener, stop_event).detach();
+
+    return ERROR_SUCCESS;
+}
+
+
+/*
     Parse the Config file, setup
     ETW Session and Krabs filters
 */
@@ -854,6 +898,11 @@ int parse_config
                 auto timeout = json_props["buffering_timout_seconds"].get<std::uint32_t>();
                 set_buffer_lists_timeout(timeout);
             }
+
+            if (!json_props["stop_event"].is_null()) {
+                auto trace_stop_event_name = json_props["stop_event"].get<std::string>();
+                status = start_event_listener_thread(trace_stop_event_name);
+            }
         }
     }
     catch (const nlohmann::detail::exception& e) {
@@ -905,21 +954,6 @@ void run_trace(trace<T>* trace)
         }
     }
 }
-
-
-/*
-    Stop any running trace
-*/
-void stop_sealighter()
-{
-    if (NULL != g_user_session) {
-        g_user_session->stop();
-    }
-    if (NULL != g_kernel_session) {
-        g_kernel_session->stop();
-    }
-}
-
 
 /*
     Handler for Ctrl+C cancel events.
