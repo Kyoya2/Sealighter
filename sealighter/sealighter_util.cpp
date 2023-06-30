@@ -276,18 +276,6 @@ int convert_bytes_sint32
 }
 
 
-bool convert_bytes_bool
-(
-    const std::vector<BYTE>& from
-)
-{
-    if (convert_bytes_sint32(from)) {
-        return true;
-    }
-    return false;
-}
-
-
 bool file_exists
 (
     std::string fileName

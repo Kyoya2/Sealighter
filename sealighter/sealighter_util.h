@@ -175,16 +175,6 @@ int convert_bytes_sint32
 
 
 /*
-    Helper to convert byte array to a boolean
-    Simply converts to an int, then checks does
-     "if(value)..."
-*/
-bool convert_bytes_bool
-(
-    const std::vector<BYTE>& from
-);
-
-/*
     Checks if a file exits on disk
 */
 bool file_exists

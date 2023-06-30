@@ -205,7 +205,7 @@ json parse_event_to_json
                     json_properties_types[prop_name] = "DOUBLE";
                     break;
                 case TDH_INTYPE_BOOLEAN:
-                    json_properties[prop_name] = convert_bytes_bool(parser.parse<krabs::binary>(prop_name_wstr).bytes());
+                    json_properties[prop_name] = static_cast<bool>(parser.parse<uint32_t>(prop_name_wstr));
                     json_properties_types[prop_name] = "BOOLEAN";
                     break;
                 case TDH_INTYPE_BINARY:
