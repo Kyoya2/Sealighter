@@ -121,6 +121,41 @@ json parse_event_to_json
     krabs::schema       schema
 )
 {
+    // Define some macros to easilly handle simillar switch-cases
+#pragma region MacroDefinition
+
+// Converts any (enum _TDH_IN_TYPE) property type identifier to a string
+// that describes the type only, without the "TDH_INTYPE_" prefix.
+// This is done by stringifying the enum name and adding the value
+// of the length of the prefix.
+#define SELAIGHTER_GET_TYPE_NAME(property_type) (#property_type + 11)
+
+// Handles the parsing of the given property type with the
+// given value (will be evaluated when encountered)
+#define SEALIGHTER_PARSE_PROPERTY_EX(property_type, value) \
+case property_type:                                        \
+    json_properties[prop_name] = (value);                  \
+    if (sealighter_context->record_property_types)         \
+        json_properties_types[prop_name] =                 \
+            SELAIGHTER_GET_TYPE_NAME(property_type);       \
+    parsed_successfully = true;                            \
+    break;
+
+// Same as above but handles simple types that can be converted
+// directly from krabs::parser::pasre
+#define SEALIGHTER_PARSE_PROPERTY(property_type, simple_value_type) \
+    SEALIGHTER_PARSE_PROPERTY_EX(property_type, parser.parse<simple_value_type>(prop_name_wstr))
+
+// Used for types that don't have parser implementations,
+// will be parsed as a hex-string.
+#define SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(property_type) \
+case property_type:                                          \
+    if (sealighter_context->record_property_types)           \
+        json_properties_types[prop_name] =                   \
+            SELAIGHTER_GET_TYPE_NAME(property_type);         \
+    break
+#pragma endregion
+
     std::string trace_name = sealighter_context->trace_name;
     json json_properties;
     json json_properties_types;
@@ -151,122 +186,65 @@ json parse_event_to_json
         for (krabs::property& prop : parser.properties()) {
             std::wstring prop_name_wstr = prop.name();
             std::string prop_name = convert_wstr_str(prop_name_wstr);
+            bool parsed_successfully = false;
 
             try
             {
                 switch (prop.type())
                 {
-                case TDH_INTYPE_ANSISTRING:
-                    json_properties[prop_name] = parser.parse<std::string>(prop_name_wstr);
-                    json_properties_types[prop_name] = "STRINGA";
-                    break;
-                case TDH_INTYPE_UNICODESTRING:
-                    json_properties[prop_name] = convert_wstr_str(parser.parse<std::wstring>(prop_name_wstr));
-                    json_properties_types[prop_name] = "STRINGW";
-                    break;
-                case TDH_INTYPE_INT8:
-                    json_properties[prop_name] = parser.parse<int8_t>(prop_name_wstr);
-                    json_properties_types[prop_name] = "INT8";
-                    break;
-                case TDH_INTYPE_UINT8:
-                    json_properties[prop_name] = parser.parse<uint8_t>(prop_name_wstr);
-                    json_properties_types[prop_name] = "UINT8";
-                    break;
-                case TDH_INTYPE_INT16:
-                    json_properties[prop_name] = parser.parse<int16_t>(prop_name_wstr);
-                    json_properties_types[prop_name] = "INT16";
-                    break;
-                case TDH_INTYPE_UINT16:
-                    json_properties[prop_name] = parser.parse<uint16_t>(prop_name_wstr);
-                    json_properties_types[prop_name] = "UINT16";
-                    break;
-                case TDH_INTYPE_INT32:
-                    json_properties[prop_name] = parser.parse<int32_t>(prop_name_wstr);
-                    json_properties_types[prop_name] = "INT32";
-                    break;
-                case TDH_INTYPE_UINT32:
-                    json_properties[prop_name] = parser.parse<uint32_t>(prop_name_wstr);
-                    json_properties_types[prop_name] = "UINT32";
-                    break;
-                case TDH_INTYPE_INT64:
-                    json_properties[prop_name] = parser.parse<int64_t>(prop_name_wstr);
-                    json_properties_types[prop_name] = "INT64";
-                    break;
-                case TDH_INTYPE_UINT64:
-                    json_properties[prop_name] = parser.parse<uint64_t>(prop_name_wstr);
-                    json_properties_types[prop_name] = "UINT64";
-                    break;
-                case TDH_INTYPE_FLOAT:
-                    json_properties[prop_name] = parser.parse<float_t>(prop_name_wstr);
-                    json_properties_types[prop_name] = "FLOAT";
-                    break;
-                case TDH_INTYPE_DOUBLE:
-                    json_properties[prop_name] = parser.parse<double_t>(prop_name_wstr);
-                    json_properties_types[prop_name] = "DOUBLE";
-                    break;
-                case TDH_INTYPE_BOOLEAN:
-                    json_properties[prop_name] = static_cast<bool>(parser.parse<uint32_t>(prop_name_wstr));
-                    json_properties_types[prop_name] = "BOOLEAN";
-                    break;
-                case TDH_INTYPE_BINARY:
-                    json_properties[prop_name] =
-                        convert_bytevector_hexstring(parser.parse<krabs::binary>(prop_name_wstr).bytes());
-                    json_properties_types[prop_name] = "BINARY";
-                    break;
-                case TDH_INTYPE_GUID:
-                    json_properties[prop_name] =
-                        convert_guid_str(parser.parse<krabs::guid>(prop_name_wstr));
-                    json_properties_types[prop_name] = "GUID";
-                    break;
-                case TDH_INTYPE_FILETIME:
-                    json_properties[prop_name] = convert_filetime_string(
-                        parser.parse<FILETIME>(prop_name_wstr));
-                    json_properties_types[prop_name] = "FILETIME";
-                    break;
-                case TDH_INTYPE_SYSTEMTIME:
-                    json_properties[prop_name] = convert_systemtime_string(
-                        parser.parse<SYSTEMTIME>(prop_name_wstr));
-                    json_properties_types[prop_name] = "SYSTEMTIME";
-                    break;
-                case TDH_INTYPE_SID:
-                    json_properties[prop_name] = convert_bytes_sidstring(
-                        parser.parse<krabs::binary>(prop_name_wstr).bytes());
-                    json_properties_types[prop_name] = "SID";
-                    break;
-                case TDH_INTYPE_WBEMSID:
-                    // *Supposedly* like SID?
-                    json_properties[prop_name] = convert_bytevector_hexstring(
-                        parser.parse<krabs::binary>(prop_name_wstr).bytes());
-                    json_properties_types[prop_name] = "WBEMSID";
-                    break;
-                case TDH_INTYPE_POINTER:
-                    json_properties[prop_name] =
-                        convert_ulong64_hexstring(parser.parse<krabs::pointer>(prop_name_wstr).address);
-                    json_properties_types[prop_name] = "POINTER";
-                    break;
-                case TDH_INTYPE_HEXINT32:
-                case TDH_INTYPE_HEXINT64:
-                case TDH_INTYPE_MANIFEST_COUNTEDSTRING:
-                case TDH_INTYPE_MANIFEST_COUNTEDANSISTRING:
-                case TDH_INTYPE_RESERVED24:
-                case TDH_INTYPE_MANIFEST_COUNTEDBINARY:
-                case TDH_INTYPE_COUNTEDSTRING:
-                case TDH_INTYPE_COUNTEDANSISTRING:
-                case TDH_INTYPE_REVERSEDCOUNTEDSTRING:
-                case TDH_INTYPE_REVERSEDCOUNTEDANSISTRING:
-                case TDH_INTYPE_NONNULLTERMINATEDSTRING:
-                case TDH_INTYPE_NONNULLTERMINATEDANSISTRING:
-                case TDH_INTYPE_UNICODECHAR:
-                case TDH_INTYPE_ANSICHAR:
-                case TDH_INTYPE_SIZET:
-                case TDH_INTYPE_HEXDUMP:
-                case TDH_INTYPE_NULL:
+                    // Types with simple parsers
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_INT8,        int8_t);
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_UINT8,       uint8_t);
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_INT16,       int16_t);
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_UINT16,      uint16_t);
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_INT32,       int32_t);
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_UINT32,      uint32_t);
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_INT64,       int64_t);
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_UINT64,      uint64_t);
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_FLOAT,       float_t);
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_DOUBLE,      double_t);
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_ANSISTRING,  std::string);
+
+                    // Types with complicated parsers
+                    SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_BOOLEAN,        static_cast<bool>(parser.parse<uint32_t>(prop_name_wstr)));
+                    SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_UNICODESTRING,  convert_wstr_str(parser.parse<std::wstring>(prop_name_wstr)));
+                    SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_POINTER,        convert_ulong64_hexstring(parser.parse<krabs::pointer>(prop_name_wstr).address));
+                    SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_FILETIME,       convert_filetime_string(parser.parse<FILETIME>(prop_name_wstr)));
+                    SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_SYSTEMTIME,     convert_systemtime_string(parser.parse<SYSTEMTIME>(prop_name_wstr)));
+                    SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_GUID,           convert_guid_str(parser.parse<krabs::guid>(prop_name_wstr)));
+                    SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_SID,            convert_bytes_sidstring(parser.parse<krabs::binary>(prop_name_wstr).bytes()));
+
+                    // Types that should be interpreted as binary
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_HEXDUMP);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_BINARY);
+
+                    // Types with no supported parsers (also interpreted as binary)
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_WBEMSID);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_HEXINT64);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_MANIFEST_COUNTEDANSISTRING);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_REVERSEDCOUNTEDANSISTRING);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_SIZET);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_ANSICHAR);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_MANIFEST_COUNTEDBINARY);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_HEXINT32);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_NONNULLTERMINATEDSTRING);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_COUNTEDANSISTRING);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_UNICODECHAR);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_MANIFEST_COUNTEDSTRING);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_NONNULLTERMINATEDANSISTRING);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_COUNTEDSTRING);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_RESERVED24);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_NULL);
+                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_REVERSEDCOUNTEDSTRING);
+
                 default:
-                    json_properties[prop_name] =
-                        convert_bytevector_hexstring(parser.parse<krabs::binary>(prop_name_wstr).bytes());
-                    json_properties_types[prop_name] = "OTHER";
+                    json_properties_types[prop_name] = "UNKNOWN";
                     break;
                 }
+
+                // Interpret non-parsable types as a hex string
+                if (!parsed_successfully)
+                    json_properties[prop_name] = convert_bytevector_hexstring(parser.parse<krabs::binary>(prop_name_wstr).bytes());
             }
             catch (...)
             {
@@ -281,8 +259,10 @@ json parse_event_to_json
                 catch (...) {}
             }
         }
-        json_event["property_types"] = json_properties_types;
+
         json_event["properties"] = json_properties;
+        if (sealighter_context->record_property_types)
+            json_event["property_types"] = json_properties_types;
     }
 
     // Check if we're meant to parse any extended data
@@ -420,7 +400,7 @@ void handle_event
     const trace_context& trace_context
 )
 {
-    auto dummy_context = std::make_shared<struct sealighter_context_t>("", false);
+    auto dummy_context = std::make_shared<struct sealighter_context_t>("", false, true);
     handle_event_context(record, trace_context, dummy_context);
 }
 

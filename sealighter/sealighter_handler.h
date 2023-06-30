@@ -36,14 +36,17 @@ struct sealighter_context_t {
     sealighter_context_t
     (
         std::string name,
-        bool dump_event
+        bool dump_event,
+        bool rec_property_types
     )
         : trace_name(name)
         , dump_raw_event(dump_event)
+        , record_property_types(rec_property_types)
     {}
 
     const std::string trace_name;
     const bool dump_raw_event;
+    const bool record_property_types;
 };
 
 /*

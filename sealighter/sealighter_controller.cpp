@@ -458,7 +458,8 @@ int add_filters
 int add_kernel_traces
 (
     json json_config,
-    EVENT_TRACE_PROPERTIES  session_properties
+    EVENT_TRACE_PROPERTIES  session_properties,
+    bool record_property_types_default
 )
 {
     int status = ERROR_SUCCESS;
@@ -570,9 +571,15 @@ int add_kernel_traces
                 break;
             }
 
+            // If the current trace configuration has a "record_property_types" attribute, use it.
+            // Otherwise, use the global attribute.
+            bool record_property_types = record_property_types_default;
+            if (!json_provider["record_property_types"].is_null())
+                record_property_types = json_provider["record_property_types"].get<bool>();
+
             std::string trace_name = json_provider["trace_name"].get<std::string>();
             auto sealighter_context =
-                std::make_shared<struct sealighter_context_t>(trace_name, false);
+                std::make_shared<struct sealighter_context_t>(trace_name, false, record_property_types);
             for (json json_buffers : json_provider["buffers"]) {
                 auto event_id = json_buffers["event_id"].get<std::uint32_t>();
                 auto max = json_buffers["max_before_buffering"].get<std::uint32_t>();
@@ -613,7 +620,8 @@ int add_user_traces
 (
     json json_config,
     EVENT_TRACE_PROPERTIES  session_properties,
-    std::wstring session_name
+    std::wstring session_name,
+    bool record_property_types_default
 )
 {
     int status = ERROR_SUCCESS;
@@ -702,8 +710,6 @@ int add_user_traces
                 pNew_provider->trace_flags(pNew_provider->trace_flags() | EVENT_ENABLE_PROPERTY_STACK_TRACE);
             }
 
-            // Create context with trace name
-
             // Check if we're dumping the raw event, or attempting to parse it
             bool dump_raw_event = false;
             if (!json_provider["dump_raw_event"].is_null()) {
@@ -713,8 +719,25 @@ int add_user_traces
                 }
             }
 
+            // If the current trace configuration has a "record_property_types" attribute, use it.
+            // Otherwise, use the global attribute.
+            bool record_property_types = record_property_types_default;
+            if (!json_provider["record_property_types"].is_null())
+            {
+                record_property_types = json_provider["record_property_types"].get<bool>();
+
+                if (dump_raw_event && record_property_types)
+                {
+                    throw nlohmann::detail::exception(
+                        nlohmann::detail::parse_error::create
+                        (0, 0, "record_property_types' option is incompatible with 'dump_raw_event' in the same trace", nullptr));
+                }
+            }
+
+            // Create context with trace name
+
             auto sealighter_context =
-                std::make_shared<struct sealighter_context_t>(trace_name, dump_raw_event);
+                std::make_shared<struct sealighter_context_t>(trace_name, dump_raw_event, record_property_types);
             for (json json_buffers : json_provider["buffers"]) {
                 auto event_id = json_buffers["event_id"].get<std::uint32_t>();
                 auto max = json_buffers["max_before_buffering"].get<std::uint32_t>();
@@ -808,6 +831,7 @@ int parse_config
     int     status = ERROR_SUCCESS;
     EVENT_TRACE_PROPERTIES  session_properties = { 0 };
     std::wstring    session_name = L"Sealighter-Trace";
+    bool record_property_types = true;
     json    json_config;
 
     try {
@@ -884,6 +908,9 @@ int parse_config
                 auto trace_stop_event_name = json_props["stop_event"].get<std::string>();
                 status = start_event_listener_thread(trace_stop_event_name);
             }
+
+            if (!json_props["record_property_types"].is_null())
+                record_property_types = json_props["record_property_types"].get<bool>();
         }
     }
     catch (const nlohmann::detail::exception& e) {
@@ -899,12 +926,12 @@ int parse_config
         }
         else {
             if (!json_config["user_traces"].is_null()) {
-                status = add_user_traces(json_config, session_properties, session_name);
+                status = add_user_traces(json_config, session_properties, session_name, record_property_types);
             }
 
             // Add kernel providers if needed
             if (ERROR_SUCCESS == status && !json_config["kernel_traces"].is_null()) {
-                status = add_kernel_traces(json_config, session_properties);
+                status = add_kernel_traces(json_config, session_properties, record_property_types);
             }
         }
     }
