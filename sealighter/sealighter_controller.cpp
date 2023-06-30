@@ -93,14 +93,14 @@ void add_filter_to_vector_property_compare_item
             // Raise a parse error, type has to be a string
             throw nlohmann::detail::exception(
                 nlohmann::detail::parse_error::create(0, 0,
-                    "The 'type' of a Property Comparer must be 'STRINGA' or 'STRINGW'"));
+                    "The 'type' of a Property Comparer must be 'STRINGA' or 'STRINGW'", nullptr));
         }
     }
     else {
         // Raise a parse error, properites *must* have all these fields
         throw nlohmann::detail::exception(
             nlohmann::detail::parse_error::create(
-                0, 0, "Properties must have a 'name', 'type' AND 'value' keys "));
+                0, 0, "Properties must have a 'name', 'type' AND 'value' keys ", nullptr));
     }
 }
 
@@ -204,7 +204,7 @@ void add_filter_to_vector_property_is_item
         // Raise an parse error, properites *must* have all these fields
         throw nlohmann::detail::exception(
             nlohmann::detail::parse_error::create
-            (0, 0, "Properties must have a 'name', 'type' AND 'value' keys "));
+            (0, 0, "Properties must have a 'name', 'type' AND 'value' keys ", nullptr));
     }
 }
 
