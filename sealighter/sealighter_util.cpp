@@ -166,8 +166,11 @@ std::string convert_filetime_string
     const FILETIME from
 )
 {
+    FILETIME local_ftime;
     SYSTEMTIME stime;
-    ::FileTimeToSystemTime(std::addressof(from), std::addressof(stime));
+
+    ::FileTimeToLocalFileTime(std::addressof(from), std::addressof(local_ftime));
+    ::FileTimeToSystemTime(std::addressof(local_ftime), std::addressof(stime));
     std::string to = convert_systemtime_string(stime);
     return to;
 }
