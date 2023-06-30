@@ -21,6 +21,7 @@ std::string convert_json_string
     }
 }
 
+
 std::string convert_str_str_lowercase(
     const std::string& from
 )
@@ -42,6 +43,7 @@ std::wstring convert_wstr_wstr_lowercase(
     return to;
 }
 
+
 std::string convert_wstr_str
 (
     const std::wstring& from
@@ -61,6 +63,7 @@ std::wstring convert_str_wstr
     return to;
 }
 
+
 std::wstring convert_str_wstr_lowercase(
     const std::string& from
 )
@@ -70,6 +73,7 @@ std::wstring convert_str_wstr_lowercase(
     return to;
 }
 
+
 std::vector<BYTE> convert_str_bytes_lowercase(
     const std::string& from
 )
@@ -78,6 +82,7 @@ std::vector<BYTE> convert_str_bytes_lowercase(
     std::vector<BYTE> to(from_lower.begin(), from_lower.end());
     return to;
 }
+
 
 std::vector<BYTE> convert_str_wbytes_lowercase(
     const std::string& from
@@ -92,6 +97,7 @@ std::vector<BYTE> convert_str_wbytes_lowercase(
     std::vector<BYTE> to(from_bytes, from_bytes + from_bytes_size);
     return to;
 }
+
 
 std::string convert_guid_str
 (
@@ -110,6 +116,7 @@ std::string convert_guid_str
     return to;
 }
 
+
 /*
     Helper to convert byte array to string,
     treating the bytes as a GUID
@@ -124,6 +131,8 @@ GUID convert_wstr_guid
 
     return to;
 }
+
+
 GUID convert_str_guid
 (
     std::string from
@@ -133,6 +142,7 @@ GUID convert_str_guid
     (void)CLSIDFromString(convert_str_wstr(from).c_str(), (LPCLSID)&to);
     return to;
 }
+
 
 std::string convert_timestamp_string
 (
@@ -149,6 +159,7 @@ std::string convert_timestamp_string
     std::string to = convert_filetime_string(ft);
     return to;
 }
+
 
 std::string convert_filetime_string
 (
@@ -237,6 +248,7 @@ std::string convert_bytearray_hexstring
     return to;
 }
 
+
 std::string convert_ulong64_hexstring
 (
     const ULONG64 from
@@ -259,6 +271,7 @@ int convert_bytes_sint32
     }
     return to;
 }
+
 
 bool convert_bytes_bool
 (
@@ -295,6 +308,7 @@ VOID log_messageA(const CHAR* format, ...)
     OutputDebugStringA(message);
     printf("%s", message);
 }
+
 
 VOID log_messageW(const WCHAR* format, ...)
 {

@@ -237,6 +237,7 @@ void add_filter_to_vector_property_is
     }
 };
 
+
 /*
     Adds a basic filter with two values
 */
@@ -622,6 +623,7 @@ int add_kernel_traces
     }
     return status;
 }
+
 
 /*
     Add User providers and create User ETW Session

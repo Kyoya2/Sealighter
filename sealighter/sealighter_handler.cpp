@@ -316,6 +316,7 @@ json parse_event_to_json
     return json_event;
 }
 
+
 void output_json_event
 (
     json json_event
@@ -343,6 +344,7 @@ void output_json_event
         }
     }
 }
+
 
 void handle_event_context
 (
@@ -412,7 +414,6 @@ void handle_event_context
 }
 
 
-
 void handle_event
 (
     const EVENT_RECORD& record,
@@ -422,6 +423,7 @@ void handle_event
     auto dummy_context = std::make_shared<struct sealighter_context_t>("", false);
     handle_event_context(record, trace_context, dummy_context);
 }
+
 
 int setup_logger_file
 (
@@ -436,6 +438,7 @@ int setup_logger_file
         return SEALIGHTER_ERROR_OUTPUT_FILE;
     }
 }
+
 
 void teardown_logger_file()
 {
@@ -463,6 +466,7 @@ void add_buffered_list
     g_buffer_lists[trace_name].push_back(buffered_list);
 }
 
+
 void set_buffer_lists_timeout
 (
     uint32_t timeout
@@ -470,6 +474,7 @@ void set_buffer_lists_timeout
 {
     g_buffer_lists_timeout_seconds = timeout;
 }
+
 
 void flush_buffered_lists()
 {
@@ -485,6 +490,7 @@ void flush_buffered_lists()
     }
     g_buffer_lists_mutex.unlock();
 }
+
 
 void bufferring_thread()
 {
@@ -503,6 +509,7 @@ void bufferring_thread()
     // Flush one last time before ending
     flush_buffered_lists();
 }
+
 
 void start_bufferring()
 {
