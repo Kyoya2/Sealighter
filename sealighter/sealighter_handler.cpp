@@ -165,43 +165,43 @@ json parse_event_to_json
                     json_properties_types[prop_name] = "STRINGW";
                     break;
                 case TDH_INTYPE_INT8:
-                    json_properties[prop_name] = parser.parse<std::int8_t>(prop_name_wstr);
+                    json_properties[prop_name] = parser.parse<int8_t>(prop_name_wstr);
                     json_properties_types[prop_name] = "INT8";
                     break;
                 case TDH_INTYPE_UINT8:
-                    json_properties[prop_name] = parser.parse<std::uint8_t>(prop_name_wstr);
+                    json_properties[prop_name] = parser.parse<uint8_t>(prop_name_wstr);
                     json_properties_types[prop_name] = "UINT8";
                     break;
                 case TDH_INTYPE_INT16:
-                    json_properties[prop_name] = parser.parse<std::int16_t>(prop_name_wstr);
+                    json_properties[prop_name] = parser.parse<int16_t>(prop_name_wstr);
                     json_properties_types[prop_name] = "INT16";
                     break;
                 case TDH_INTYPE_UINT16:
-                    json_properties[prop_name] = parser.parse<std::uint16_t>(prop_name_wstr);
+                    json_properties[prop_name] = parser.parse<uint16_t>(prop_name_wstr);
                     json_properties_types[prop_name] = "UINT16";
                     break;
                 case TDH_INTYPE_INT32:
-                    json_properties[prop_name] = parser.parse<std::int32_t>(prop_name_wstr);
+                    json_properties[prop_name] = parser.parse<int32_t>(prop_name_wstr);
                     json_properties_types[prop_name] = "INT32";
                     break;
                 case TDH_INTYPE_UINT32:
-                    json_properties[prop_name] = parser.parse<std::uint32_t>(prop_name_wstr);
+                    json_properties[prop_name] = parser.parse<uint32_t>(prop_name_wstr);
                     json_properties_types[prop_name] = "UINT32";
                     break;
                 case TDH_INTYPE_INT64:
-                    json_properties[prop_name] = parser.parse<std::int64_t>(prop_name_wstr);
+                    json_properties[prop_name] = parser.parse<int64_t>(prop_name_wstr);
                     json_properties_types[prop_name] = "INT64";
                     break;
                 case TDH_INTYPE_UINT64:
-                    json_properties[prop_name] = parser.parse<std::uint64_t>(prop_name_wstr);
+                    json_properties[prop_name] = parser.parse<uint64_t>(prop_name_wstr);
                     json_properties_types[prop_name] = "UINT64";
                     break;
                 case TDH_INTYPE_FLOAT:
-                    json_properties[prop_name] = parser.parse<std::float_t>(prop_name_wstr);
+                    json_properties[prop_name] = parser.parse<float_t>(prop_name_wstr);
                     json_properties_types[prop_name] = "FLOAT";
                     break;
                 case TDH_INTYPE_DOUBLE:
-                    json_properties[prop_name] = parser.parse<std::double_t>(prop_name_wstr);
+                    json_properties[prop_name] = parser.parse<double_t>(prop_name_wstr);
                     json_properties_types[prop_name] = "DOUBLE";
                     break;
                 case TDH_INTYPE_BOOLEAN:
