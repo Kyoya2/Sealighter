@@ -47,9 +47,6 @@
     <ClInclude Include="sealighter_util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="sealighter_krabs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="sealighter_json.h">
       <Filter>Header Files</Filter>
     </ClInclude>

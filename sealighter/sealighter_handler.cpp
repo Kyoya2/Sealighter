@@ -1,4 +1,4 @@
-#include "sealighter_krabs.h"
+#include "krabs.hpp"
 #include "sealighter_handler.h"
 #include "sealighter_errors.h"
 #include "sealighter_util.h"
@@ -7,6 +7,8 @@
 #include <fstream>
 #include <mutex>
 #include <atomic>
+
+using namespace krabs;
 
 // -------------------------
 // GLOBALS - START

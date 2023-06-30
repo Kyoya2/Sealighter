@@ -1,6 +1,8 @@
 #pragma once
-#include "sealighter_krabs.h"
+#include "krabs.hpp"
 #include "sealighter_json.h"
+
+using namespace krabs;
 
 
 struct event_buffer_t {

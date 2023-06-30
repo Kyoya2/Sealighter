@@ -1,4 +1,4 @@
-#include "sealighter_krabs.h"
+#include "krabs.hpp"
 #include <iostream>
 #include <fstream>
 #include <thread>
@@ -8,6 +8,8 @@
 #include "sealighter_predicates.h"
 #include "sealighter_handler.h"
 #include "sealighter_provider.h"
+
+using namespace krabs;
 
 // -------------------------
 // GLOBALS - START

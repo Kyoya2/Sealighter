@@ -1,10 +1,14 @@
 #pragma once
-#include "sealighter_krabs.h"
+#include "krabs.hpp"
 #include <vector>
 #include <locale>
 #include <algorithm>
 #include <iterator>
 #include <psapi.h>
+
+using namespace krabs;
+
+
 /**
  * <summary>
  *   Accepts an event if any of the predicates in the vector matches
