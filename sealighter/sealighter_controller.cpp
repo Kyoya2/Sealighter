@@ -50,43 +50,35 @@ void add_filter_to_vector_property_compare_item
         std::string type = item["type"].get<std::string>();
         if (type == "STRINGA") {
             std::string val = item["value"].get<std::string>();
-            auto pred = std::shared_ptr<
+            auto pred = std::make_shared<
                 predicates::details::property_view_predicate<
                 std::string,
                 kpa::generic_string<char>,
                 ComparerA
                 >
-            >(new predicates::details::property_view_predicate<
-                std::string,
-                kpa::generic_string<char>,
-                ComparerA
             >(
                 name,
                 val,
                 kpa::generic_string<char>(),
                 ComparerA()
-                ));
+            );
             list.emplace_back(pred);
         }
         else if (type == "STRINGW") {
             std::wstring val = convert_str_wstr(item["value"].get<std::string>());
 
-            auto pred = std::shared_ptr<
+            auto pred = std::make_shared<
                 predicates::details::property_view_predicate<
                 std::wstring,
                 kpa::generic_string<wchar_t>,
                 ComparerW
                 >
-            >(new predicates::details::property_view_predicate<
-                std::wstring,
-                kpa::generic_string<wchar_t>,
-                ComparerW
             >(
                 name,
                 val,
                 kpa::generic_string<wchar_t>(),
                 ComparerW()
-                ));
+            );
             list.emplace_back(pred);
         }
         else {
@@ -127,7 +119,7 @@ void add_filter_to_vector_property_compare
                 add_filter_to_vector_property_compare_item<ComparerA, ComparerW>(item, list);
             }
             if (!list.empty()) {
-                pred_vector.emplace_back(std::shared_ptr<sealighter_any_of>(new sealighter_any_of(list)));
+                pred_vector.emplace_back(std::make_shared<sealighter_any_of>(list));
             }
         }
         else {
@@ -151,53 +143,43 @@ void add_filter_to_vector_property_is_item
         std::string type = item["type"].get<std::string>();
         if (type == "STRINGA") {
             auto val = item["value"].get<std::string>();
-            list.emplace_back(std::shared_ptr<sealighter_property_is<std::string>>
-                (new sealighter_property_is<std::string>(name, val)));
+            list.emplace_back(std::make_shared<sealighter_property_is<std::string>>(name, val));
         }
         else if (type == "STRINGW") {
             auto val = convert_str_wstr(item["value"].get<std::string>());
-            list.emplace_back(std::shared_ptr<sealighter_property_is<std::wstring>>
-                (new sealighter_property_is<std::wstring>(name, val)));
+            list.emplace_back(std::make_shared<sealighter_property_is<std::wstring>>(name, val));
         }
         else if (type == "INT8") {
             auto val = item["value"].get<std::int8_t>();
-            list.emplace_back(std::shared_ptr<sealighter_property_is<std::int8_t>>
-                (new sealighter_property_is<std::int8_t>(name, val)));
+            list.emplace_back(std::make_shared<sealighter_property_is<std::int8_t>>(name, val));
         }
         else if (type == "UINT8") {
             auto val = item["value"].get<std::uint8_t>();
-            list.emplace_back(std::shared_ptr<sealighter_property_is<std::uint8_t>>
-                (new sealighter_property_is<std::uint8_t>(name, val)));
+            list.emplace_back(std::make_shared<sealighter_property_is<std::uint8_t>>(name, val));
         }
         else if (type == "INT16") {
             auto val = item["value"].get<std::int16_t>();
-            list.emplace_back(std::shared_ptr<sealighter_property_is<std::int16_t>>
-                (new sealighter_property_is<std::int16_t>(name, val)));
+            list.emplace_back(std::make_shared<sealighter_property_is<std::int16_t>>(name, val));
         }
         else if (type == "UINT16") {
             auto val = item["value"].get<std::uint16_t>();
-            list.emplace_back(std::shared_ptr<sealighter_property_is<std::uint16_t>>
-                (new sealighter_property_is<std::uint16_t>(name, val)));
+            list.emplace_back(std::make_shared<sealighter_property_is<std::uint16_t>>(name, val));
         }
         else if (type == "INT32") {
             auto val = item["value"].get<std::int32_t>();
-            list.emplace_back(std::shared_ptr<sealighter_property_is<std::int32_t>>
-                (new sealighter_property_is<std::int32_t>(name, val)));
+            list.emplace_back(std::make_shared<sealighter_property_is<std::int32_t>>(name, val));
         }
         else if (type == "UINT32") {
             auto val = item["value"].get<std::uint32_t>();
-            list.emplace_back(std::shared_ptr<sealighter_property_is<std::uint32_t>>
-                (new sealighter_property_is<std::uint32_t>(name, val)));
+            list.emplace_back(std::make_shared<sealighter_property_is<std::uint32_t>>(name, val));
         }
         else if (type == "INT64") {
             auto val = item["value"].get<std::int64_t>();
-            list.emplace_back(std::shared_ptr<sealighter_property_is<std::int64_t>>
-                (new sealighter_property_is<std::int64_t>(name, val)));
+            list.emplace_back(std::make_shared<sealighter_property_is<std::int64_t>>(name, val));
         }
         else if (type == "UINT64") {
             auto val = item["value"].get<std::uint64_t>();
-            list.emplace_back(std::shared_ptr<sealighter_property_is<std::uint64_t>>
-                (new sealighter_property_is<std::uint64_t>(name, val)));
+            list.emplace_back(std::make_shared<sealighter_property_is<std::uint64_t>>(name, val));
         }
     }
     else {
@@ -228,7 +210,7 @@ void add_filter_to_vector_property_is
                 add_filter_to_vector_property_is_item(item, list);
             }
             if (!list.empty()) {
-                pred_vector.emplace_back(std::shared_ptr<sealighter_any_of>(new sealighter_any_of(list)));
+                pred_vector.emplace_back(std::make_shared<sealighter_any_of>(list));
             }
         }
         else {
@@ -243,8 +225,8 @@ void add_filter_to_vector_property_is
 */
 template <
     typename TPred,
-    typename TJson1=std::uint64_t,
-    typename TJson2=std::uint64_t
+    typename TJson1 = std::uint64_t,
+    typename TJson2 = std::uint64_t
 >
 void add_filter_to_vector_basic_pair
 (
@@ -263,18 +245,18 @@ void add_filter_to_vector_basic_pair
                 if (!item[item1_name].is_null() && !item[item2_name].is_null()) {
                     TJson1 item1 = item[item1_name].get<TJson1>();
                     TJson2 item2 = item[item2_name].get<TJson2>();
-                    list.emplace_back(std::shared_ptr<TPred>(new TPred(item1, item2)));
+                    list.emplace_back(std::make_shared<TPred>(item1, item2));
                 }
             }
             if (!list.empty()) {
-                pred_vector.emplace_back(std::shared_ptr<sealighter_any_of>(new sealighter_any_of(list)));
+                pred_vector.emplace_back(std::make_shared<sealighter_any_of>(list));
             }
         }
         else {
             if (!root[element][item1_name].is_null() && !root[element][item2_name].is_null()) {
                 TJson1 item1 = root[element][item1_name].get<TJson1>();
                 TJson2 item2 = root[element][item2_name].get<TJson2>();
-                pred_vector.emplace_back(std::shared_ptr<TPred>(new TPred(item1, item2)));
+                pred_vector.emplace_back(std::make_shared<TPred>(item1, item2));
             }
         }
     }
@@ -287,7 +269,7 @@ void add_filter_to_vector_basic_pair
 */
 template <
     typename TPred,
-    typename TJson1=std::uint64_t
+    typename TJson1 = std::uint64_t
 >
 void add_filter_to_vector_basic
 (
@@ -302,15 +284,14 @@ void add_filter_to_vector_basic
         // If a list, filter can be any of them
         if (root[element].is_array()) {
             for (json item : root[element]) {
-                list.emplace_back(std::shared_ptr<TPred>(new TPred(item.get<TJson1>())));
+                list.emplace_back(std::make_shared<TPred>(item.get<TJson1>()));
             }
             if (!list.empty()) {
-                pred_vector.emplace_back(std::shared_ptr<sealighter_any_of>(new sealighter_any_of(list)));
+                pred_vector.emplace_back(std::make_shared<sealighter_any_of>(list));
             }
         }
         else {
-            pred_vector.emplace_back(std::shared_ptr<TPred>
-                (new TPred(root[element].get<TJson1>())));
+            pred_vector.emplace_back(std::make_shared<TPred>(root[element].get<TJson1>()));
         }
     }
 }
@@ -416,15 +397,15 @@ int add_filters
 
     if (json_provider["filters"].is_null() ||
         (json_provider["filters"]["any_of"].is_null() &&
-         json_provider["filters"]["all_of"].is_null() &&
-         json_provider["filters"]["none_of"].is_null()
-        )
-       ) {
+            json_provider["filters"]["all_of"].is_null() &&
+            json_provider["filters"]["none_of"].is_null()
+            )
+        ) {
         // No filters, log everything
         log_messageA("    No event filters\n");
         pNew_provider->add_on_event_callback([sealighter_context](const EVENT_RECORD& record, const krabs::trace_context& trace_context) {
             handle_event_context(record, trace_context, sealighter_context);
-        });
+            });
     }
     else {
         // Build top-level list
@@ -435,7 +416,7 @@ int add_filters
             std::vector<std::shared_ptr<predicates::details::predicate_base>> list;
             status = add_filters_to_vector(list, json_provider["filters"]["any_of"]);
             if (ERROR_SUCCESS == status) {
-                top_list.emplace_back(std::shared_ptr<sealighter_any_of>(new sealighter_any_of(list)));
+                top_list.emplace_back(std::make_shared<sealighter_any_of>(list));
             }
         }
         if (ERROR_SUCCESS == status && !json_provider["filters"]["all_of"].is_null()) {
@@ -443,7 +424,7 @@ int add_filters
             std::vector<std::shared_ptr<predicates::details::predicate_base>> list;
             status = add_filters_to_vector(list, json_provider["filters"]["all_of"]);
             if (ERROR_SUCCESS == status) {
-                top_list.emplace_back(std::shared_ptr<sealighter_all_of>(new sealighter_all_of(list)));
+                top_list.emplace_back(std::make_shared<sealighter_all_of>(list));
             }
         }
         if (ERROR_SUCCESS == status && !json_provider["filters"]["none_of"].is_null()) {
@@ -451,7 +432,7 @@ int add_filters
             std::vector<std::shared_ptr<predicates::details::predicate_base>> list;
             status = add_filters_to_vector(list, json_provider["filters"]["none_of"]);
             if (ERROR_SUCCESS == status) {
-                top_list.emplace_back(std::shared_ptr<sealighter_none_of>(new sealighter_none_of(list)));
+                top_list.emplace_back(std::make_shared<sealighter_none_of>(list));
             }
         }
 
@@ -462,7 +443,7 @@ int add_filters
 
             filter.add_on_event_callback([sealighter_context](const EVENT_RECORD& record, const krabs::trace_context& trace_context) {
                 handle_event_context(record, trace_context, sealighter_context);
-            });
+                });
             pNew_provider->add_filter(filter);
         }
     }
@@ -591,12 +572,12 @@ int add_kernel_traces
 
             std::string trace_name = json_provider["trace_name"].get<std::string>();
             auto sealighter_context =
-                std::shared_ptr<struct sealighter_context_t>(new sealighter_context_t(trace_name, false));
+                std::make_shared<struct sealighter_context_t>(trace_name, false);
             for (json json_buffers : json_provider["buffers"]) {
                 auto event_id = json_buffers["event_id"].get<std::uint32_t>();
                 auto max = json_buffers["max_before_buffering"].get<std::uint32_t>();
                 auto buffer_list = event_buffer_list_t(event_id, max);
-                for (json json_buff_prop: json_buffers["properties_to_match"]) {
+                for (json json_buff_prop : json_buffers["properties_to_match"]) {
                     buffer_list.properties_to_compare.push_back(json_buff_prop.get<std::string>());
                 }
 
@@ -616,7 +597,7 @@ int add_kernel_traces
             }
         }
     }
-    catch (const nlohmann::detail::exception & e) {
+    catch (const nlohmann::detail::exception& e) {
         log_messageA("invalid kernel provider in config file\n");
         log_messageA("%s\n", e.what());
         status = SEALIGHTER_ERROR_PARSE_KERNEL_PROVIDER;
@@ -671,7 +652,7 @@ int add_user_traces
                 try {
                     pNew_provider = new provider<>(provider_name);
                 }
-                catch (const std::exception & e) {
+                catch (const std::exception& e) {
                     log_messageA("%s\n", e.what());
                     status = SEALIGHTER_ERROR_NO_PROVIDER;
                     break;
@@ -733,7 +714,7 @@ int add_user_traces
             }
 
             auto sealighter_context =
-                std::shared_ptr<struct sealighter_context_t>(new sealighter_context_t(trace_name, dump_raw_event));
+                std::make_shared<struct sealighter_context_t>(trace_name, dump_raw_event);
             for (json json_buffers : json_provider["buffers"]) {
                 auto event_id = json_buffers["event_id"].get<std::uint32_t>();
                 auto max = json_buffers["max_before_buffering"].get<std::uint32_t>();
@@ -756,7 +737,7 @@ int add_user_traces
             }
         }
     }
-    catch (const nlohmann::detail::exception & e) {
+    catch (const nlohmann::detail::exception& e) {
         log_messageA("invalid providers in config file\n");
         log_messageA("%s\n", e.what());
         status = SEALIGHTER_ERROR_PARSE_USER_PROVIDER;
@@ -943,7 +924,7 @@ void run_trace(trace<T>* trace)
         try {
             trace->start();
         }
-        catch (const std::exception & e) {
+        catch (const std::exception& e) {
             log_messageA("%s\n", e.what());
             trace->stop();
             throw;
