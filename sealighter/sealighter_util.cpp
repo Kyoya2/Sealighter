@@ -2,6 +2,7 @@
 #include <sstream>
 #include <fstream>
 #include <codecvt>
+#include <cwctype>
 #include "sealighter_json.h"
 #include "sealighter_util.h"
 
@@ -26,7 +27,7 @@ std::string convert_str_str_lowercase(
 {
     std::string to = from;
     std::transform(to.begin(), to.end(), to.begin(),
-        [](unsigned char c) { return std::tolower(c); });
+        [](char c) { return (char)std::tolower(c); });
     return to;
 }
 
@@ -37,7 +38,7 @@ std::wstring convert_wstr_wstr_lowercase(
 {
     std::wstring to = from;
     std::transform(to.begin(), to.end(), to.begin(),
-        [](unsigned char c) { return std::tolower(c); });
+        [](wchar_t c) { return std::towlower(c); });
     return to;
 }
 
