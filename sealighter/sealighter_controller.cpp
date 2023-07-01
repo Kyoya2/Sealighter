@@ -183,7 +183,7 @@ void add_filter_to_vector_property_is_item
         }
     }
     else {
-        // Raise an parse error, properites *must* have all these fields
+        // Raise a parse error, properites *must* have all these fields
         throw nlohmann::detail::exception(
             nlohmann::detail::parse_error::create
             (0, 0, "Properties must have a 'name', 'type' AND 'value' keys ", nullptr));
@@ -825,14 +825,14 @@ int start_event_listener_thread(const std::string& stop_event_name)
 */
 int parse_config
 (
-    std::string       config_string
+    std::string config_string
 )
 {
-    int     status = ERROR_SUCCESS;
-    EVENT_TRACE_PROPERTIES  session_properties = { 0 };
-    std::wstring    session_name = L"Sealighter-Trace";
+    int status = ERROR_SUCCESS;
+    EVENT_TRACE_PROPERTIES session_properties = { 0 };
+    std::wstring session_name = L"Sealighter-Trace";
     bool record_property_types = true;
-    json    json_config;
+    json json_config;
 
     try {
         // Read in config file

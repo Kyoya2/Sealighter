@@ -118,7 +118,7 @@ json parse_event_to_json
     const EVENT_RECORD& record,
     const trace_context&,
     std::shared_ptr<struct sealighter_context_t> sealighter_context,
-    krabs::schema       schema
+    krabs::schema schema
 )
 {
     // Define some macros to easilly handle simillar switch-cases
@@ -219,7 +219,7 @@ case property_type:                                                        \
             {
                 switch (prop.type())
                 {
-                    // Types with simple parsers
+                    // Types that can be parsed directly by krabsetw
                     SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_BOOLEAN,     bool);
                     SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_INT8,        int8_t);
                     SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_UINT8,       uint8_t);
