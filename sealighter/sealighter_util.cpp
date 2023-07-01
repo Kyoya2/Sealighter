@@ -3,6 +3,7 @@
 #include <fstream>
 #include <codecvt>
 #include <cwctype>
+#include <locale>
 #include "sealighter_json.h"
 #include "sealighter_util.h"
 
@@ -44,13 +45,13 @@ std::wstring convert_wstr_wstr_lowercase(
 }
 
 
-std::string convert_wstr_str
+std::string convert_wstr_utf8
 (
     const std::wstring& from
 )
 {
-    std::string to(from.begin(), from.end());
-    return to;
+    static std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
+    return utf8_conv.to_bytes(from);
 }
 
 

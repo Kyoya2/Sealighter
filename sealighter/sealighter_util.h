@@ -30,7 +30,7 @@ std::wstring convert_wstr_wstr_lowercase(
 /*
     Helper to convert widestring to string
 */
-std::string convert_wstr_str
+std::string convert_wstr_utf8
 (
     const std::wstring& from
 );

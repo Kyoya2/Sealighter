@@ -161,15 +161,15 @@ case property_type:                                          \
     json json_properties_types;
     json json_header = {
         { "event_id", schema.event_id() },
-        { "event_name", convert_wstr_str(schema.event_name()) },
-        { "task_name", convert_wstr_str(schema.task_name()) },
+        { "event_name", convert_wstr_utf8(schema.event_name()) },
+        { "task_name", convert_wstr_utf8(schema.task_name()) },
         { "thread_id", schema.thread_id() },
         { "timestamp", convert_timestamp_string(schema.timestamp()) },
         { "event_flags", schema.event_flags() },
         { "event_opcode", schema.event_opcode() },
         { "event_version", schema.event_version() },
         { "process_id", schema.process_id()},
-        { "provider_name", convert_wstr_str(schema.provider_name()) },
+        { "provider_name", convert_wstr_utf8(schema.provider_name()) },
         { "activity_id", convert_guid_str(schema.activity_id()) },
         { "trace_name", trace_name},
     };
@@ -185,7 +185,7 @@ case property_type:                                          \
         krabs::parser parser(schema);
         for (krabs::property& prop : parser.properties()) {
             std::wstring prop_name_wstr = prop.name();
-            std::string prop_name = convert_wstr_str(prop_name_wstr);
+            std::string prop_name = convert_wstr_utf8(prop_name_wstr);
             bool parsed_successfully = false;
 
             try
@@ -207,7 +207,7 @@ case property_type:                                          \
 
                     // Types with complicated parsers
                     SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_BOOLEAN,        static_cast<bool>(parser.parse<uint32_t>(prop_name_wstr)));
-                    SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_UNICODESTRING,  convert_wstr_str(parser.parse<std::wstring>(prop_name_wstr)));
+                    SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_UNICODESTRING,  convert_wstr_utf8(parser.parse<std::wstring>(prop_name_wstr)));
                     SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_POINTER,        convert_ulong64_hexstring(parser.parse<krabs::pointer>(prop_name_wstr).address));
                     SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_FILETIME,       convert_filetime_string(parser.parse<FILETIME>(prop_name_wstr)));
                     SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_SYSTEMTIME,     convert_systemtime_string(parser.parse<SYSTEMTIME>(prop_name_wstr)));
