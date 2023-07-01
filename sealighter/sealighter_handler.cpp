@@ -132,28 +132,56 @@ json parse_event_to_json
 
 // Handles the parsing of the given property type with the
 // given value (will be evaluated when encountered)
-#define SEALIGHTER_PARSE_PROPERTY_EX(property_type, value) \
-case property_type:                                        \
-    json_properties[prop_name] = (value);                  \
-    if (sealighter_context->record_property_types)         \
-        json_properties_types[prop_name] =                 \
-            SELAIGHTER_GET_TYPE_NAME(property_type);       \
-    parsed_successfully = true;                            \
-    break;
+#define SEALIGHTER_PARSE_PROPERTY_TEMPLATE(property_type, additional_code) \
+case property_type:                                                        \
+    if (sealighter_context->record_property_types)                         \
+        json_properties_types[prop_name] =                                 \
+            SELAIGHTER_GET_TYPE_NAME(property_type);                       \
+    additional_code;                                                       \
+    break
+
+// Handles the parsing of proprty types that can parsed in a
+// single C++ statement
+#define SEALIGHTER_PARSE_PROPERTY_STATEMENT(property_type, value) \
+    SEALIGHTER_PARSE_PROPERTY_TEMPLATE(                           \
+        property_type,                                            \
+        json_properties[prop_name] = (value)                      \
+    );
 
 // Same as above but handles simple types that can be converted
-// directly from krabs::parser::pasre
+// directly using krabs::parser::pasre
 #define SEALIGHTER_PARSE_PROPERTY(property_type, simple_value_type) \
-    SEALIGHTER_PARSE_PROPERTY_EX(property_type, parser.parse<simple_value_type>(prop_name_wstr))
+    SEALIGHTER_PARSE_PROPERTY_STATEMENT(property_type, parser.parse<simple_value_type>(prop_name_wstr))
+
+// Parses all of the "TDH_INTYPE_*COUNTED*STRING" types. The reason that
+// "krabs::parser::pasre<krabs::counted_string>" is not used here is because
+// it doesn't take the endianness of the uint16_t prefix into concideration
+// and always assumes that it's little-endian, which isn't true for types like
+// "TDH_INTYPE_REVERSEDCOUNTEDSTRING". This macro parses the counted-string
+// without even reading the value of the size prefix, which allows it to parse
+// counted-strings of any endianness,
+#define SEALIGHTER_PARSE_COUNTED_STRING(property_type, is_wide)            \
+    SEALIGHTER_PARSE_PROPERTY_TEMPLATE(                                    \
+        property_type,                                                     \
+        {auto buffer = parser.parse<krabs::binary>(prop_name_wstr);        \
+        auto str_begin = buffer.bytes().data() + sizeof(uint16_t);         \
+        auto str_end = buffer.bytes().data() + buffer.bytes().size();      \
+        if (is_wide) {                                                     \
+            json_properties[prop_name] =                                   \
+                convert_wstr_utf8(                                         \
+                    std::wstring((wchar_t*)str_begin, (wchar_t*)str_end)); \
+        } else {                                                           \
+            json_properties[prop_name] = std::string(str_begin, str_end);  \
+        }}                                                                 \
+    );
 
 // Used for types that don't have parser implementations,
 // will be parsed as a hex-string.
-#define SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(property_type) \
-case property_type:                                          \
-    if (sealighter_context->record_property_types)           \
-        json_properties_types[prop_name] =                   \
-            SELAIGHTER_GET_TYPE_NAME(property_type);         \
-    break
+#define SEALIGHTER_PARSE_AS_BINARY(property_type) \
+    SEALIGHTER_PARSE_PROPERTY_TEMPLATE(           \
+        property_type,                            \
+        parse_as_binary = true;                   \
+    );
 #pragma endregion
 
     std::string trace_name = sealighter_context->trace_name;
@@ -186,56 +214,66 @@ case property_type:                                          \
         for (krabs::property& prop : parser.properties()) {
             std::wstring prop_name_wstr = prop.name();
             std::string prop_name = convert_wstr_utf8(prop_name_wstr);
-            bool parsed_successfully = false;
+            bool parse_as_binary = false;
 
             try
             {
                 switch (prop.type())
                 {
                     // Types with simple parsers
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_BOOLEAN,     bool);
                     SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_INT8,        int8_t);
                     SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_UINT8,       uint8_t);
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_ANSICHAR,    char);
                     SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_INT16,       int16_t);
                     SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_UINT16,      uint16_t);
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_UNICODECHAR, wchar_t);
                     SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_INT32,       int32_t);
                     SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_UINT32,      uint32_t);
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_HEXINT32,    uint32_t);
                     SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_INT64,       int64_t);
                     SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_UINT64,      uint64_t);
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_HEXINT64,    uint64_t);
                     SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_FLOAT,       float_t);
                     SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_DOUBLE,      double_t);
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_SIZET,       SIZE_T);
                     SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_ANSISTRING,  std::string);
+                    SEALIGHTER_PARSE_PROPERTY(TDH_INTYPE_NONNULLTERMINATEDANSISTRING, std::string);
 
-                    // Types with complicated parsers
-                    SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_BOOLEAN,        static_cast<bool>(parser.parse<uint32_t>(prop_name_wstr)));
-                    SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_UNICODESTRING,  convert_wstr_utf8(parser.parse<std::wstring>(prop_name_wstr)));
-                    SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_POINTER,        convert_ulong64_hexstring(parser.parse<krabs::pointer>(prop_name_wstr).address));
-                    SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_FILETIME,       convert_filetime_string(parser.parse<FILETIME>(prop_name_wstr)));
-                    SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_SYSTEMTIME,     convert_systemtime_string(parser.parse<SYSTEMTIME>(prop_name_wstr)));
-                    SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_GUID,           convert_guid_str(parser.parse<krabs::guid>(prop_name_wstr)));
-                    SEALIGHTER_PARSE_PROPERTY_EX(TDH_INTYPE_SID,            convert_bytes_sidstring(parser.parse<krabs::binary>(prop_name_wstr).bytes()));
+                    // String types that have a `uint_16` before their value (counted types)
+                    SEALIGHTER_PARSE_COUNTED_STRING(TDH_INTYPE_COUNTEDANSISTRING,          false);
+                    SEALIGHTER_PARSE_COUNTED_STRING(TDH_INTYPE_MANIFEST_COUNTEDANSISTRING, false);
+                    SEALIGHTER_PARSE_COUNTED_STRING(TDH_INTYPE_REVERSEDCOUNTEDANSISTRING,  false);
+                    SEALIGHTER_PARSE_COUNTED_STRING(TDH_INTYPE_COUNTEDSTRING,              true);
+                    SEALIGHTER_PARSE_COUNTED_STRING(TDH_INTYPE_MANIFEST_COUNTEDSTRING,     true);
+                    SEALIGHTER_PARSE_COUNTED_STRING(TDH_INTYPE_REVERSEDCOUNTEDSTRING,      true);
+
+                    // Types with single-statement parsers
+                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_POINTER,       convert_ulong64_hexstring(parser.parse<krabs::pointer>(prop_name_wstr).address));
+                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_FILETIME,      convert_filetime_string(parser.parse<FILETIME>(prop_name_wstr)));
+                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_SYSTEMTIME,    convert_systemtime_string(parser.parse<SYSTEMTIME>(prop_name_wstr)));
+                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_GUID,          convert_guid_str(parser.parse<GUID>(prop_name_wstr)));
+                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_SID,           std::move(parser.parse<krabs::sid>(prop_name_wstr).sid_string));
+                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_WBEMSID,       std::move(parser.parse<krabs::sid>(prop_name_wstr).sid_string));
+                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_UNICODESTRING, convert_wstr_utf8(parser.parse<std::wstring>(prop_name_wstr)));
+                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_NONNULLTERMINATEDSTRING, convert_wstr_utf8(parser.parse<std::wstring>(prop_name_wstr)));
+
+                    // Types that need multiline-implementations
+                    SEALIGHTER_PARSE_PROPERTY_TEMPLATE(TDH_INTYPE_MANIFEST_COUNTEDBINARY, {
+                        auto buffer = parser.parse<krabs::binary>(prop_name_wstr);
+                        json_properties[prop_name] = convert_bytearray_hexstring(
+                            buffer.bytes().data() + sizeof(uint16_t),
+                            (int)buffer.bytes().size() - sizeof(uint16_t)
+                        );
+                    });
 
                     // Types that should be interpreted as binary
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_HEXDUMP);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_BINARY);
+                    SEALIGHTER_PARSE_AS_BINARY(TDH_INTYPE_HEXDUMP);
+                    SEALIGHTER_PARSE_AS_BINARY(TDH_INTYPE_BINARY);
 
                     // Types with no supported parsers (also interpreted as binary)
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_WBEMSID);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_HEXINT64);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_MANIFEST_COUNTEDANSISTRING);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_REVERSEDCOUNTEDANSISTRING);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_SIZET);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_ANSICHAR);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_MANIFEST_COUNTEDBINARY);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_HEXINT32);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_NONNULLTERMINATEDSTRING);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_COUNTEDANSISTRING);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_UNICODECHAR);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_MANIFEST_COUNTEDSTRING);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_NONNULLTERMINATEDANSISTRING);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_COUNTEDSTRING);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_RESERVED24);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_NULL);
-                    SEALIGHTER_SET_UNPARSED_PROPERTY_TYPE(TDH_INTYPE_REVERSEDCOUNTEDSTRING);
+                    SEALIGHTER_PARSE_AS_BINARY(TDH_INTYPE_RESERVED24);
+                    SEALIGHTER_PARSE_AS_BINARY(TDH_INTYPE_NULL);
 
                 default:
                     json_properties_types[prop_name] = "UNKNOWN";
@@ -243,7 +281,7 @@ case property_type:                                          \
                 }
 
                 // Interpret non-parsable types as a hex string
-                if (!parsed_successfully)
+                if (parse_as_binary)
                     json_properties[prop_name] = convert_bytevector_hexstring(parser.parse<krabs::binary>(prop_name_wstr).bytes());
             }
             catch (...)

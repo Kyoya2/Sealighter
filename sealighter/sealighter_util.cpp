@@ -193,51 +193,18 @@ std::string convert_systemtime_string
 }
 
 
-std::string convert_bytes_sidstring
-(
-    const std::vector<BYTE>& from
-)
-{
-#define MAX_NAME 256
-    char domain_name[MAX_NAME] = "";
-    char user_name[MAX_NAME] = "";
-    DWORD user_name_size = MAX_NAME;
-    DWORD domain_name_size = MAX_NAME;
-    SID_NAME_USE name_use;
-    const BYTE* data = (from.data());
-    std::string to;
-    if (LookupAccountSidA(NULL, (PSID)data, user_name, &user_name_size, domain_name, &domain_name_size, &name_use)) {
-        to = domain_name;
-        to += "\\";
-        to += user_name;
-    }
-    else {
-        // Fallback to printing the raw bytes
-        to = convert_bytevector_hexstring(from);
-    }
-    return to;
-}
-
-
 std::string convert_bytevector_hexstring
 (
     const std::vector<BYTE>& from
 )
 {
-    std::ostringstream ss;
-    ss << std::hex << std::uppercase << std::setfill('0');
-    for (int c : from) {
-        ss << std::setw(2) << c;
-    }
-
-    std::string to = ss.str();
-    return to;
+    return convert_bytearray_hexstring(from.data(), (int)from.size());
 }
 
 
 std::string convert_bytearray_hexstring
 (
-    BYTE* from,
+    const BYTE* from,
     int len
 )
 {

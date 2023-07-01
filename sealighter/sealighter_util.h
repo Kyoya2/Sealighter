@@ -125,16 +125,6 @@ GUID convert_str_guid
 
 
 /*
-    Helper to convert byte array to string,
-    treating the bytes as a SID
-*/
-std::string convert_bytes_sidstring
-(
-    const std::vector<BYTE>& from
-);
-
-
-/*
     Helper to convert byte vector to a
     hexidecimal string representation
     (will *not* have a leading "0x")
@@ -151,7 +141,7 @@ std::string convert_bytevector_hexstring
 */
 std::string convert_bytearray_hexstring
 (
-    BYTE* from,
+    const BYTE* from,
     int len
 );
 
