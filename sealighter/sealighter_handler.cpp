@@ -134,9 +134,7 @@ json parse_event_to_json
 // given value (will be evaluated when encountered)
 #define SEALIGHTER_PARSE_PROPERTY_TEMPLATE(property_type, additional_code) \
 case property_type:                                                        \
-    if (sealighter_context->record_property_types)                         \
-        json_properties_types[prop_name] =                                 \
-            SELAIGHTER_GET_TYPE_NAME(property_type);                       \
+    property_type_string = SELAIGHTER_GET_TYPE_NAME(property_type);        \
     additional_code;                                                       \
     break
 
@@ -215,6 +213,7 @@ case property_type:                                                        \
             std::wstring prop_name_wstr = prop.name();
             std::string prop_name = convert_wstr_utf8(prop_name_wstr);
             bool parse_as_binary = false;
+            const char* property_type_string = nullptr;
 
             try
             {
@@ -276,25 +275,41 @@ case property_type:                                                        \
                     SEALIGHTER_PARSE_AS_BINARY(TDH_INTYPE_NULL);
 
                 default:
-                    json_properties_types[prop_name] = "UNKNOWN";
+                    property_type_string = "UNKNOWN";
                     break;
                 }
 
                 // Interpret non-parsable types as a hex string
                 if (parse_as_binary)
                     json_properties[prop_name] = convert_bytevector_hexstring(parser.parse<krabs::binary>(prop_name_wstr).bytes());
+
+                if (sealighter_context->record_property_types)
+                    json_properties_types[prop_name] = property_type_string;
             }
             catch (...)
             {
-                // Failed to parse, default to hex
-                // Try hex, if something even worse is up return empty
+                // If encountered a parsing error, try to parse as hex-string.
+                // 
+                // This flow is common with providers that provide more data than needed for small integral data types.
+                // for example, we may get a proprety with type 'uint8_t' but the actual data size is 4 bytes so the
+                // parsing function "krabs::parser::parse<uint8_t>" will throw a "type_mismatch_assert" exception
+                // which will lead us here.
                 try
                 {
                     json_properties[prop_name] =
                         convert_bytevector_hexstring(parser.parse<krabs::binary>(prop_name_wstr).bytes());
-                    json_properties_types[prop_name] = "ERROR";
+
+                    if (sealighter_context->record_property_types)
+                        if (nullptr != property_type_string)
+                        {
+                            // Keep the name of the original type if it was deduced successfully
+                            json_properties_types[prop_name] = std::string(property_type_string) + " (ERROR)";
+                        }
+                        else
+                            json_properties_types[prop_name] = "ERROR";
+
                 }
-                catch (...) {}
+                catch (...) { /* Encountered a parsing error the second time, skip the current property */ }
             }
         }
 
