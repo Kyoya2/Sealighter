@@ -8,24 +8,7 @@
 #include "sealighter_util.h"
 
 
-std::string convert_json_string
-(
-    json item,
-    bool pretty_print
-)
-{
-    if (pretty_print) {
-        return item.dump(4, ' ', false, nlohmann::detail::error_handler_t::ignore);
-    }
-    else {
-        return item.dump(-1, ' ', false, nlohmann::detail::error_handler_t::ignore);
-    }
-}
-
-
-std::string convert_str_str_lowercase(
-    const std::string& from
-)
+std::string Utils::Convert::to_lowercase(const std::string& from)
 {
     std::string to = from;
     std::transform(to.begin(), to.end(), to.begin(),
@@ -34,9 +17,7 @@ std::string convert_str_str_lowercase(
 }
 
 
-std::wstring convert_wstr_wstr_lowercase(
-    const std::wstring& from
-)
+std::wstring Utils::Convert::to_lowercase(const std::wstring& from)
 {
     std::wstring to = from;
     std::transform(to.begin(), to.end(), to.begin(),
@@ -45,51 +26,41 @@ std::wstring convert_wstr_wstr_lowercase(
 }
 
 
-std::string convert_wstr_utf8
-(
-    const std::wstring& from
-)
+std::string Utils::Convert::wstr_to_str(const std::wstring& from)
 {
-    static std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
-    return utf8_conv.to_bytes(from);
+    int result_size = WideCharToMultiByte(CP_UTF8, 0, from.c_str(), (int)from.size(), nullptr, 0, nullptr, nullptr);
+    std::string result(result_size, '\0');
+    WideCharToMultiByte(CP_UTF8, 0, from.c_str(), (int)from.size(), result.data(), result_size, nullptr, nullptr);
+    return result;
 }
 
 
-std::wstring convert_str_wstr
-(
-    const std::string& from
-)
+std::wstring Utils::Convert::str_to_wstr(const std::string& from)
 {
-    std::wstring to(from.begin(), from.end());
-    return to;
+    int result_size = MultiByteToWideChar(CP_UTF8, 0, from.c_str(), (int)from.size(), nullptr, 0);
+    std::wstring result(result_size, L'\0');
+    MultiByteToWideChar(CP_UTF8, 0, from.c_str(), (int)from.size(), result.data(), result_size);
+    return result;
 }
 
 
-std::wstring convert_str_wstr_lowercase(
-    const std::string& from
-)
+std::wstring Utils::Convert::str_to_lower_wstr(const std::string& from)
 {
-    std::string from_lower = convert_str_str_lowercase(from);
-    std::wstring to = convert_str_wstr(from_lower);
-    return to;
+    return Utils::Convert::str_to_wstr(Utils::Convert::to_lowercase(from));
 }
 
 
-std::vector<BYTE> convert_str_bytes_lowercase(
-    const std::string& from
-)
+std::vector<BYTE> Utils::Convert::str_to_lower_bytes(const std::string& from)
 {
-    std::string from_lower = convert_str_str_lowercase(from);
+    std::string from_lower = Utils::Convert::to_lowercase(from);
     std::vector<BYTE> to(from_lower.begin(), from_lower.end());
     return to;
 }
 
 
-std::vector<BYTE> convert_str_wbytes_lowercase(
-    const std::string& from
-)
+std::vector<BYTE> Utils::Convert::str_to_lower_wstr_bytes(const std::string& from)
 {
-    std::wstring from_wide_lower = convert_str_wstr_lowercase(from);
+    std::wstring from_wide_lower = Utils::Convert::str_to_lower_wstr(from);
     BYTE* from_bytes = (BYTE*)from_wide_lower.c_str();
     // Size returns string len, so double as they are widechars
     // But don't copy in trailing NULL so we can match mid-string
@@ -100,32 +71,21 @@ std::vector<BYTE> convert_str_wbytes_lowercase(
 }
 
 
-std::string convert_guid_str
-(
-    const GUID& from
-)
+std::string Utils::Convert::guid_to_str(const GUID& from)
 {
-    char guid_string[39]; // 2 braces + 32 hex chars + 4 hyphens + null terminator
-    snprintf(
-        guid_string, sizeof(guid_string),
-        "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-        from.Data1, from.Data2, from.Data3,
-        from.Data4[0], from.Data4[1], from.Data4[2],
-        from.Data4[3], from.Data4[4], from.Data4[5],
-        from.Data4[6], from.Data4[7]);
-    std::string to(guid_string);
-    return to;
+    std::string result(38, '\0'); // 2 braces + 32 hex chars + 4 hyphens
+    snprintf(result.data(), result.size() + 1,
+             "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+             from.Data1, from.Data2, from.Data3,
+             from.Data4[0], from.Data4[1], from.Data4[2],
+             from.Data4[3], from.Data4[4], from.Data4[5],
+             from.Data4[6], from.Data4[7]);
+
+    return result;
 }
 
 
-/*
-    Helper to convert byte array to string,
-    treating the bytes as a GUID
-*/
-GUID convert_wstr_guid
-(
-    std::wstring from
-)
+GUID Utils::Convert::wstr_to_guid(const std::wstring& from)
 {
     GUID to = GUID_NULL;
     (void)CLSIDFromString(from.c_str(), (LPCLSID)&to);
@@ -134,96 +94,65 @@ GUID convert_wstr_guid
 }
 
 
-GUID convert_str_guid
-(
-    std::string from
-)
+GUID Utils::Convert::str_to_guid(const std::string& from)
 {
-    GUID to = GUID_NULL;
-    (void)CLSIDFromString(convert_str_wstr(from).c_str(), (LPCLSID)&to);
-    return to;
+    return Utils::Convert::wstr_to_guid(Utils::Convert::str_to_wstr(from));
 }
 
 
-std::string convert_timestamp_string
-(
-    const LARGE_INTEGER from
-)
+std::string Utils::Convert::time_to_str(const LARGE_INTEGER& from)
 {
-    // Both LARGE_INTEGER timestamps and FILETIMES are
-    // "100-nanosecond intervals since midnight, January 1, 1601"
-    FILETIME ft;
-
-    ft.dwHighDateTime = from.HighPart;
-    ft.dwLowDateTime = from.LowPart;
-    
-    std::string to = convert_filetime_string(ft);
-    return to;
+    FILETIME ft = { (DWORD)from.LowPart, (DWORD)from.HighPart };
+    return Utils::Convert::time_to_str(ft);
 }
 
 
-std::string convert_filetime_string
-(
-    const FILETIME from
-)
+std::string Utils::Convert::time_to_str(const FILETIME& from)
 {
     FILETIME local_ftime;
     SYSTEMTIME stime;
 
-    ::FileTimeToLocalFileTime(std::addressof(from), std::addressof(local_ftime));
-    ::FileTimeToSystemTime(std::addressof(local_ftime), std::addressof(stime));
-    std::string to = convert_systemtime_string(stime);
-    return to;
+    ::FileTimeToLocalFileTime(&from, &local_ftime);
+    ::FileTimeToSystemTime(&local_ftime, &stime);
+
+    return Utils::Convert::time_to_str(stime);
 }
 
 
-std::string convert_systemtime_string
-(
-    const SYSTEMTIME from
-)
+std::string Utils::Convert::time_to_str(const SYSTEMTIME& from)
 {
-    std::ostringstream stm;
-    const auto w2 = std::setw(2);
-    stm << std::setfill('0') << std::setw(4) << from.wYear << '-' << w2 << from.wMonth
-        << '-' << w2 << from.wDay << ' ' << w2 << from.wHour
-        << ':' << w2 << from.wMinute << ':' << w2 << from.wSecond << 'Z';
+    std::string result(sizeof("1970-01-01 00:00:00.000") - 1, '\0');
+    snprintf(result.data(), result.size() + 1,
+             "%04hu-%02hu-%02hu %02hu:%02hu:%02hu.%03hu",
+             from.wYear, from.wMonth, from.wDay, from.wHour,
+             from.wMinute, from.wSecond, from.wMilliseconds);
 
-    std::string to = stm.str();
-    return to;
+    return result;
 }
 
 
-std::string convert_bytevector_hexstring
-(
-    const std::vector<BYTE>& from
-)
+std::string Utils::Convert::bytes_to_hex_str(const std::vector<BYTE>& from)
 {
-    return convert_bytearray_hexstring(from.data(), (int)from.size());
+    return Utils::Convert::bytes_to_hex_str(from.data(), (int)from.size());
 }
 
 
-std::string convert_bytearray_hexstring
-(
-    const BYTE* from,
-    int len
-)
+std::string Utils::Convert::bytes_to_hex_str(const BYTE* from, int len)
 {
-    std::ostringstream ss;
-    ss << std::hex << std::uppercase << std::setfill('0');
-    for (int i = 0; i < len; i++) {
-        ss << std::setw(2) << (int)from[i];
+    static constexpr char hexmap[] = { '0', '1', '2', '3', '4', '5', '6', '7',
+                                       '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
+    std::string result(len * 2, '\0');
+    for (int i = 0; i < len; ++i)
+    {
+        result[2 * i]     = hexmap[(from[i] & 0xF0) >> 4];
+        result[2 * i + 1] = hexmap[from[i] & 0x0F];
     }
-
-    std::string to = ss.str();
-    return to;
+    return result;
 }
 
 
-std::string convert_ulong64_hexstring
-(
-    const ULONG64 from
-)
+std::string Utils::Convert::ulong64_to_hex_str(const ULONG64 from)
 {
     std::stringstream to;
     to << "0x" << std::uppercase << std::hex << from;
@@ -231,51 +160,33 @@ std::string convert_ulong64_hexstring
 }
 
 
-int convert_bytes_sint32
-(
-    const std::vector<BYTE>& from
-)
+std::string Utils::Convert::json_to_string(json item, bool pretty_print)
 {
-    int to = 0;
-    if (from.size() == 4) {
-        to = (from[3] << 24) | (from[2] << 16) | (from[1] << 8) | (from[0]);
+    if (pretty_print) {
+        return item.dump(4, ' ', false, nlohmann::detail::error_handler_t::ignore);
     }
-    return to;
+    else {
+        return item.dump(-1, ' ', false, nlohmann::detail::error_handler_t::ignore);
+    }
 }
 
 
-bool file_exists
-(
-    std::string fileName
-)
+bool Utils::file_exists(const std::string& file_name)
 {
-    std::ifstream infile(fileName);
-    return infile.good();
+    DWORD file_attributes = GetFileAttributesA(file_name.c_str());
+    return (file_attributes != INVALID_FILE_ATTRIBUTES &&
+           !(file_attributes & FILE_ATTRIBUTE_DIRECTORY));
 }
 
 
-#define MAX_SIZE 4096
-
-VOID log_messageA(const CHAR* format, ...)
+VOID Utils::log_message(const CHAR* format, ...)
 {
-    CHAR message[MAX_SIZE];
+    CHAR message[0x1000];
 
     va_list arg_ptr;
     va_start(arg_ptr, format);
-    _vsnprintf_s(message, MAX_SIZE, MAX_SIZE-1, format, arg_ptr);
+    _vsnprintf_s(message, sizeof(message), sizeof(message) - 1, format, arg_ptr);
     va_end(arg_ptr);
     OutputDebugStringA(message);
     printf("%s", message);
-}
-
-
-VOID log_messageW(const WCHAR* format, ...)
-{
-    WCHAR message[MAX_SIZE];
-    va_list arg_ptr;
-    va_start(arg_ptr, format);
-    _vsnwprintf_s(message, MAX_SIZE, MAX_SIZE-1, format, arg_ptr);
-    va_end(arg_ptr);
-    OutputDebugStringW(message);
-    wprintf(L"%s", message);
 }

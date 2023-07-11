@@ -51,7 +51,7 @@ void threaded_print_ln
 )
 {
     g_print_mutex.lock();
-    log_messageA("%s\n", event_string.c_str());
+    Utils::log_message("%s\n", event_string.c_str());
     g_print_mutex.unlock();
 }
 
@@ -76,19 +76,19 @@ void write_event_log
         json_event["header"]["activity_id"].get<std::string>().c_str(),
         (USHORT)json_event["header"]["event_flags"].get<std::uint32_t>(),
         (USHORT)json_event["header"]["event_id"].get<std::uint32_t>(),
-        convert_str_wstr(json_event["header"]["event_name"].get<std::string>()).c_str(),
+        Utils::Convert::str_to_wstr(json_event["header"]["event_name"].get<std::string>()).c_str(),
         (UCHAR)json_event["header"]["event_opcode"].get<std::uint32_t>(),
         (UCHAR)json_event["header"]["event_version"].get<std::uint32_t>(),
         json_event["header"]["process_id"].get<std::uint32_t>(),
-        convert_str_wstr(json_event["header"]["provider_name"].get<std::string>()).c_str(),
-        convert_str_wstr(json_event["header"]["task_name"].get<std::string>()).c_str(),
+        Utils::Convert::str_to_wstr(json_event["header"]["provider_name"].get<std::string>()).c_str(),
+        Utils::Convert::str_to_wstr(json_event["header"]["task_name"].get<std::string>()).c_str(),
         json_event["header"]["thread_id"].get<std::uint32_t>(),
         0,  // schema.timestamp().quadPart
         trace_name.c_str()
     );
 
     if (status != ERROR_SUCCESS) {
-        log_messageA("Error %ul line %d\n", status, __LINE__);
+        Utils::log_message("Error %ul line %d\n", status, __LINE__);
         return;
     }
 }
@@ -166,7 +166,7 @@ case property_type:                                                        \
         auto str_end = buffer.bytes().data() + buffer.bytes().size();      \
         if (is_wide) {                                                     \
             json_properties[prop_name] =                                   \
-                convert_wstr_utf8(                                         \
+                Utils::Convert::wstr_to_str(                               \
                     std::wstring((wchar_t*)str_begin, (wchar_t*)str_end)); \
         } else {                                                           \
             json_properties[prop_name] = std::string(str_begin, str_end);  \
@@ -187,16 +187,16 @@ case property_type:                                                        \
     json json_properties_types;
     json json_header = {
         { "event_id", schema.event_id() },
-        { "event_name", convert_wstr_utf8(schema.event_name()) },
-        { "task_name", convert_wstr_utf8(schema.task_name()) },
+        { "event_name", Utils::Convert::wstr_to_str(schema.event_name()) },
+        { "task_name", Utils::Convert::wstr_to_str(schema.task_name()) },
         { "thread_id", schema.thread_id() },
-        { "timestamp", convert_timestamp_string(schema.timestamp()) },
+        { "timestamp", Utils::Convert::time_to_str(schema.timestamp()) },
         { "event_flags", schema.event_flags() },
         { "event_opcode", schema.event_opcode() },
         { "event_version", schema.event_version() },
         { "process_id", schema.process_id()},
-        { "provider_name", convert_wstr_utf8(schema.provider_name()) },
-        { "activity_id", convert_guid_str(schema.activity_id()) },
+        { "provider_name", Utils::Convert::wstr_to_str(schema.provider_name()) },
+        { "activity_id", Utils::Convert::guid_to_str(schema.activity_id()) },
         { "trace_name", trace_name},
     };
 
@@ -204,14 +204,14 @@ case property_type:                                                        \
 
     // Check if we are just dumping the raw event, or attempting to parse it
     if (sealighter_context->dump_raw_event) {
-        std::string raw_hex = convert_bytearray_hexstring((BYTE*)record.UserData, record.UserDataLength);
+        std::string raw_hex = Utils::Convert::bytes_to_hex_str((BYTE*)record.UserData, record.UserDataLength);
         json_event["raw"] = raw_hex;
     }
     else {
         krabs::parser parser(schema);
         for (krabs::property& prop : parser.properties()) {
             std::wstring prop_name_wstr = prop.name();
-            std::string prop_name = convert_wstr_utf8(prop_name_wstr);
+            std::string prop_name = Utils::Convert::wstr_to_str(prop_name_wstr);
             bool parse_as_binary = false;
             const char* property_type_string = nullptr;
 
@@ -248,19 +248,19 @@ case property_type:                                                        \
                     SEALIGHTER_PARSE_COUNTED_STRING(TDH_INTYPE_REVERSEDCOUNTEDSTRING,      true);
 
                     // Types with single-statement parsers
-                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_POINTER,       convert_ulong64_hexstring(parser.parse<krabs::pointer>(prop_name_wstr).address));
-                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_FILETIME,      convert_filetime_string(parser.parse<FILETIME>(prop_name_wstr)));
-                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_SYSTEMTIME,    convert_systemtime_string(parser.parse<SYSTEMTIME>(prop_name_wstr)));
-                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_GUID,          convert_guid_str(parser.parse<GUID>(prop_name_wstr)));
+                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_POINTER,       Utils::Convert::ulong64_to_hex_str(parser.parse<krabs::pointer>(prop_name_wstr).address));
+                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_FILETIME,      Utils::Convert::time_to_str(parser.parse<FILETIME>(prop_name_wstr)));
+                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_SYSTEMTIME,    Utils::Convert::time_to_str(parser.parse<SYSTEMTIME>(prop_name_wstr)));
+                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_GUID,          Utils::Convert::guid_to_str(parser.parse<GUID>(prop_name_wstr)));
                     SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_SID,           std::move(parser.parse<krabs::sid>(prop_name_wstr).sid_string));
                     SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_WBEMSID,       std::move(parser.parse<krabs::sid>(prop_name_wstr).sid_string));
-                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_UNICODESTRING, convert_wstr_utf8(parser.parse<std::wstring>(prop_name_wstr)));
-                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_NONNULLTERMINATEDSTRING, convert_wstr_utf8(parser.parse<std::wstring>(prop_name_wstr)));
+                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_UNICODESTRING, Utils::Convert::wstr_to_str(parser.parse<std::wstring>(prop_name_wstr)));
+                    SEALIGHTER_PARSE_PROPERTY_STATEMENT(TDH_INTYPE_NONNULLTERMINATEDSTRING, Utils::Convert::wstr_to_str(parser.parse<std::wstring>(prop_name_wstr)));
 
                     // Types that need multiline-implementations
                     SEALIGHTER_PARSE_PROPERTY_TEMPLATE(TDH_INTYPE_MANIFEST_COUNTEDBINARY, {
                         auto buffer = parser.parse<krabs::binary>(prop_name_wstr);
-                        json_properties[prop_name] = convert_bytearray_hexstring(
+                        json_properties[prop_name] = Utils::Convert::bytes_to_hex_str(
                             buffer.bytes().data() + sizeof(uint16_t),
                             (int)buffer.bytes().size() - sizeof(uint16_t)
                         );
@@ -281,7 +281,7 @@ case property_type:                                                        \
 
                 // Interpret non-parsable types as a hex string
                 if (parse_as_binary)
-                    json_properties[prop_name] = convert_bytevector_hexstring(parser.parse<krabs::binary>(prop_name_wstr).bytes());
+                    json_properties[prop_name] = Utils::Convert::bytes_to_hex_str(parser.parse<krabs::binary>(prop_name_wstr).bytes());
 
                 if (sealighter_context->record_property_types)
                     json_properties_types[prop_name] = property_type_string;
@@ -297,7 +297,7 @@ case property_type:                                                        \
                 try
                 {
                     json_properties[prop_name] =
-                        convert_bytevector_hexstring(parser.parse<krabs::binary>(prop_name_wstr).bytes());
+                        Utils::Convert::bytes_to_hex_str(parser.parse<krabs::binary>(prop_name_wstr).bytes());
 
                     if (sealighter_context->record_property_types)
                         if (nullptr != property_type_string)
@@ -336,7 +336,7 @@ case property_type:                                                        \
                 for (size_t x = 0; x < stack_length; x++)
                 {
                     // Stacktraces make more sense in hex
-                    json_stacktrace.push_back(convert_ulong64_hexstring(stacktrace->Address[x]));
+                    json_stacktrace.push_back(Utils::Convert::ulong64_to_hex_str(stacktrace->Address[x]));
                 }
                 // We're ignoring the MatchId, which if not 0 then the stack is split across events
                 // But stiching it together would be too much of a pain for the mostly-stateless
@@ -358,7 +358,7 @@ void output_json_event
     // If writing to a file, don't pretty print
     // This makes it 1 line per event
     bool pretty_print = (Output_format::output_file != g_output_format);
-    std::string event_string = convert_json_string(json_event, pretty_print);
+    std::string event_string = Utils::Convert::json_to_string(json_event, pretty_print);
     std::string trace_name = json_event["header"]["trace_name"];
 
     // Log event if we successfully parsed it
@@ -413,8 +413,8 @@ void handle_event_context
             for (json& json_event_buffered : buffer.json_event_buffered) {
                 bool matched_field = true;
                 for (std::string prop_to_compare: buffer.properties_to_compare) {
-                    auto field_event = convert_json_string(json_event["properties"][prop_to_compare], false);
-                    auto field_buffered = convert_json_string(json_event_buffered["properties"][prop_to_compare], false);
+                    auto field_event = Utils::Convert::json_to_string(json_event["properties"][prop_to_compare], false);
+                    auto field_buffered = Utils::Convert::json_to_string(json_event_buffered["properties"][prop_to_compare], false);
                     if (field_event != field_buffered) {
                         // Not a match
                         matched_field = false;

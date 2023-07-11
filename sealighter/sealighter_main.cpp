@@ -16,14 +16,14 @@ int main
 {
     int status = 0;
     if (2 != argc) {
-        log_messageA("usage: %s <config_file>\n", argv[0]);
+        Utils::log_message("usage: %s <config_file>\n", argv[0]);
         return SEALIGHTER_ERROR_NOCONFIG;
     }
 
     std::string config_path = argv[1];
 
-    if (!file_exists(config_path)) {
-        log_messageA("Error: Config file doesn't exist\n");
+    if (!Utils::file_exists(config_path)) {
+        Utils::log_message("Error: Config file doesn't exist\n");
         return SEALIGHTER_ERROR_MISSING_CONFIG;
     }
     std::ifstream  config_stream(config_path);

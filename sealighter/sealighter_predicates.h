@@ -171,10 +171,10 @@ private:
  */
 struct sealighter_any_field_contains : predicates::details::predicate_base {
     sealighter_any_field_contains(std::string to_find)
-        : to_findW_(convert_str_wstr_lowercase(to_find))
-        , to_findA_(convert_str_str_lowercase(to_find))
-        , to_find_bytesA_(convert_str_bytes_lowercase(to_find))
-        , to_find_bytesW_(convert_str_wbytes_lowercase(to_find))
+        : to_findW_(Utils::Convert::str_to_lower_wstr(to_find))
+        , to_findA_(Utils::Convert::to_lowercase(to_find))
+        , to_find_bytesA_(Utils::Convert::str_to_lower_bytes(to_find))
+        , to_find_bytesW_(Utils::Convert::str_to_lower_wstr_bytes(to_find))
     {}
 
     bool operator()(const EVENT_RECORD& record, const trace_context& trace_context) const {
@@ -184,19 +184,19 @@ struct sealighter_any_field_contains : predicates::details::predicate_base {
         for (property& prop : parser.properties())
         {
             // First check the property name
-            if (convert_wstr_wstr_lowercase(prop.name()).find(to_findW_) != std::string::npos) {
+            if (Utils::Convert::to_lowercase(prop.name()).find(to_findW_) != std::string::npos) {
                 return true;
             };
 
             switch (prop.type())
             {
                 case TDH_INTYPE_ANSISTRING:
-                    if (convert_str_str_lowercase(parser.parse<std::string>(prop.name())).find(to_findA_) != std::string::npos) {
+                    if (Utils::Convert::to_lowercase(parser.parse<std::string>(prop.name())).find(to_findA_) != std::string::npos) {
                         return true;
                     };
                     break;
                 case TDH_INTYPE_UNICODESTRING:
-                    if (convert_wstr_wstr_lowercase(parser.parse<std::wstring>(prop.name())).find(to_findW_) != std::string::npos) {
+                    if (Utils::Convert::to_lowercase(parser.parse<std::wstring>(prop.name())).find(to_findW_) != std::string::npos) {
                         return true;
                     };
                     break;
@@ -325,7 +325,7 @@ private:
  */
 struct sealighter_activity_id_is : predicates::details::predicate_base {
     sealighter_activity_id_is(std::string guid_match)
-        : guid_match_(convert_str_guid(guid_match))
+        : guid_match_(Utils::Convert::str_to_guid(guid_match))
     {}
 
     bool operator()(const EVENT_RECORD& record, const trace_context& trace_context) const {

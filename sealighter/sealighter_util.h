@@ -1,176 +1,39 @@
-// Utility helper functions
 #pragma once
 #include "sealighter_json.h"
 
 
-/*
-    Helper to convert json to string
-*/
-std::string convert_json_string
-(
-    json item,
-    bool pretty_print
-);
+namespace Utils
+{
+    namespace Convert
+    {
+        // String manipulation
+        std::string to_lowercase(const std::string& from);
+        std::wstring to_lowercase(const std::wstring& from);
+        std::string wstr_to_str(const std::wstring& from);
+        std::wstring str_to_wstr(const std::string& from);
+        std::wstring str_to_lower_wstr(const std::string& from);
+        std::vector<BYTE> str_to_lower_bytes(const std::string& from);
+        std::vector<BYTE> str_to_lower_wstr_bytes(const std::string& from);
 
+        // Timne convertion
+        std::string time_to_str(const LARGE_INTEGER& from);
+        std::string time_to_str(const FILETIME& from);
+        std::string time_to_str(const SYSTEMTIME& from);
 
-/*
-    Helper to convert string to a lowercase version of that string
-*/
-std::string convert_str_str_lowercase(
-    const std::string& from
-);
+        // GUID convertion
+        std::string guid_to_str(const GUID& from);
+        GUID wstr_to_guid(const std::wstring& from);
+        GUID str_to_guid(const std::string& from);
 
-/*
-    Helper to convert wstring to a lowercase version of that string
-*/
-std::wstring convert_wstr_wstr_lowercase(
-    const std::wstring& from
-);
+        // Binary convertion
+        std::string bytes_to_hex_str(const std::vector<BYTE>& from);
+        std::string bytes_to_hex_str(const BYTE* from, int len);
+        std::string ulong64_to_hex_str(const ULONG64 from);
 
-/*
-    Helper to convert widestring to string
-*/
-std::string convert_wstr_utf8
-(
-    const std::wstring& from
-);
+        std::string json_to_string(json item, bool pretty_print);
+    }
 
+    bool file_exists(const std::string& file_name);
 
-/*
-    Helper to convert string to widestring
-*/
-std::wstring convert_str_wstr(
-    const std::string& from
-);
-
-/*
-    Helper to convert string to widestring lowercase
-*/
-std::wstring convert_str_wstr_lowercase(
-    const std::string& from
-);
-
-/*
-    Helper to convert string to lowercase byte vector
-*/
-std::vector<BYTE> convert_str_bytes_lowercase(
-    const std::string& from
-);
-
-/*
-    Helper to convert string to lowercase widechar byte vector
-*/
-std::vector<BYTE> convert_str_wbytes_lowercase(
-    const std::string& from
-);
-
-/*
-    Helper to convert LARGE_INTEGER timestamp to string
-    MSDN States this is:
-        Time at which the information in this structure was updated,
-        in 100-nanosecond intervals since midnight, January 1, 1601.
-
-    This is the same as a FILETIME
-*/
-std::string convert_timestamp_string
-(
-    const LARGE_INTEGER from
-);
-
-
-/*
-    Helper to convert FILETIME to string
-*/
-std::string convert_filetime_string
-(
-    const FILETIME from
-);
-
-
-/*
-    Helper to convert SYSTEMTIME to string
-*/
-std::string convert_systemtime_string
-(
-    const SYSTEMTIME from
-);
-
-
-/*
-    Helper to convert byte array to string,
-    treating the bytes as a GUID
-*/
-std::string convert_guid_str
-(
-    const GUID& from
-);
-
-/*
-    Helper to convert widestring to GUID.
-    If this fails the GUID will be NULL_GUID
-*/
-GUID convert_wstr_guid
-(
-    std::wstring from
-);
-
-/*
-    Helper to convert string to GUID.
-    If this fails the GUID will be NULL_GUID
-*/
-GUID convert_str_guid
-(
-    std::string from
-);
-
-
-/*
-    Helper to convert byte vector to a
-    hexidecimal string representation
-    (will *not* have a leading "0x")
-*/
-std::string convert_bytevector_hexstring
-(
-    const std::vector<BYTE>& from
-);
-
-/*
-    Helper to convert byte array to a
-    hexidecimal string representation
-    (will *not* have a leading "0x")
-*/
-std::string convert_bytearray_hexstring
-(
-    const BYTE* from,
-    int len
-);
-
-/*
-    Helper to convert a ULONG64 to a
-    hex string representation
-*/
-std::string convert_ulong64_hexstring
-(
-    const ULONG64 from
-);
-
-
-/*
-    Helper to convert byte array to an int
-*/
-int convert_bytes_sint32
-(
-    const std::vector<BYTE>& from
-);
-
-
-/*
-    Checks if a file exits on disk
-*/
-bool file_exists
-(
-    std::string fileName
-);
-
-VOID log_messageA(const CHAR* format, ...);
-VOID log_messageW(const WCHAR* format, ...);
+    void log_message(const CHAR* format, ...);
+}
