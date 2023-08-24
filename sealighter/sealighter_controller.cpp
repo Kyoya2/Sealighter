@@ -402,18 +402,10 @@ int add_filters
 )
 {
     int status = ERROR_SUCCESS;
-
     json filters_json = json_provider["filters"];
-    json any_of_json = filters_json["any_of"];
-    json all_of_json = filters_json["all_of"];
-    json none_of_json = filters_json["none_of"];
-
-    if (filters_json.is_null() ||
-        (any_of_json.is_null() &&
-            all_of_json.is_null() &&
-            none_of_json.is_null()
-            )
-        ) {
+    
+    if (filters_json.is_null())
+    {
         // No filters, log everything
         Utils::log_message("    No event filters\n");
         pNew_provider->add_on_event_callback([sealighter_context](const EVENT_RECORD& record, const krabs::trace_context& trace_context) {
@@ -423,6 +415,10 @@ int add_filters
     else {
         // Build top-level list
         // All 3 options will eventually be ANDed together
+        json any_of_json = filters_json["any_of"];
+        json all_of_json = filters_json["all_of"];
+        json none_of_json = filters_json["none_of"];
+
         std::vector<std::shared_ptr<predicates::details::predicate_base>> top_list;
         if (!any_of_json.is_null()) {
             Utils::log_message("    Filtering any of:\n");
