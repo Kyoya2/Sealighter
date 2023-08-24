@@ -470,7 +470,7 @@ int add_filters
 */
 int add_kernel_traces
 (
-    json json_config,
+    json kernel_traces_config,
     EVENT_TRACE_PROPERTIES  session_properties,
     bool record_property_types_default
 )
@@ -485,7 +485,7 @@ int add_kernel_traces
 
     // Add any Kernel providers
     try {
-        for (json json_provider : json_config["kernel_traces"]) {
+        for (json json_provider : kernel_traces_config) {
             std::string trace_name;
 
             if (json provider_name_json = json_provider["provider_name"];
@@ -643,7 +643,7 @@ int add_kernel_traces
 */
 int add_user_traces
 (
-    json json_config,
+    json user_traces_config,
     EVENT_TRACE_PROPERTIES session_properties,
     std::wstring session_name,
     bool record_property_types_default
@@ -655,7 +655,7 @@ int add_user_traces
     g_user_session->set_trace_properties(&session_properties);
     try {
         // Parse the Usermode Providers
-        for (json json_provider : json_config["user_traces"]) {
+        for (json json_provider : user_traces_config) {
             GUID provider_guid;
             provider<>* pNew_provider;
             std::wstring provider_name;
@@ -1007,7 +1007,7 @@ int parse_config
     if (ERROR_SUCCESS == status)
     {
         if (json user_traces_json = json_config["user_traces"],
-            kernel_traces_json = json_config["kernel_traces"];
+                 kernel_traces_json = json_config["kernel_traces"];
 
             user_traces_json.is_null() && kernel_traces_json.is_null())
         {
@@ -1018,13 +1018,13 @@ int parse_config
         {
             if (!user_traces_json.is_null())
             {
-                status = add_user_traces(json_config, session_properties, session_name, record_property_types);
+                status = add_user_traces(user_traces_json, session_properties, session_name, record_property_types);
             }
 
             // Add kernel providers if needed
             if (ERROR_SUCCESS == status && !kernel_traces_json.is_null())
             {
-                status = add_kernel_traces(json_config, session_properties, record_property_types);
+                status = add_kernel_traces(kernel_traces_json, session_properties, record_property_types);
             }
         }
     }
