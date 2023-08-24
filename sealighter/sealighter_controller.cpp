@@ -451,7 +451,7 @@ int add_filters
 
         // Add top level list to a filter
         if (ERROR_SUCCESS == status) {
-            sealighter_all_of top_pred = sealighter_all_of(top_list);
+            sealighter_all_of top_pred(top_list);
             event_filter filter(top_pred);
 
             filter.add_on_event_callback([sealighter_context](const EVENT_RECORD& record, const krabs::trace_context& trace_context) {
