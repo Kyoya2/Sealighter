@@ -45,11 +45,15 @@ void add_filter_to_vector_property_compare_item
     std::vector<std::shared_ptr<predicates::details::predicate_base>>& list
 )
 {
-    if (!item["name"].is_null() && !item["value"].is_null() && !item["type"].is_null()) {
-        std::wstring name = Utils::Convert::str_to_wstr(item["name"].get<std::string>());
-        std::string type = item["type"].get<std::string>();
+    json name_json = item["name"];
+    json value_json = item["value"];
+    json type_json = item["type"];
+
+    if (!name_json.is_null() && !value_json.is_null() && !type_json.is_null()) {
+        std::wstring name = Utils::Convert::str_to_wstr(name_json.get<std::string>());
+        std::string type = type_json.get<std::string>();
         if (type == "STRINGA") {
-            std::string val = item["value"].get<std::string>();
+            std::string val = value_json.get<std::string>();
             auto pred = std::make_shared<
                 predicates::details::property_view_predicate<
                 std::string,
@@ -65,7 +69,7 @@ void add_filter_to_vector_property_compare_item
             list.emplace_back(pred);
         }
         else if (type == "STRINGW") {
-            std::wstring val = Utils::Convert::str_to_wstr(item["value"].get<std::string>());
+            std::wstring val = Utils::Convert::str_to_wstr(value_json.get<std::string>());
 
             auto pred = std::make_shared<
                 predicates::details::property_view_predicate<
@@ -138,47 +142,51 @@ void add_filter_to_vector_property_is_item
     std::vector<std::shared_ptr<predicates::details::predicate_base>>& list
 )
 {
-    if (!item["name"].is_null() && !item["value"].is_null() && !item["type"].is_null()) {
-        std::wstring name = Utils::Convert::str_to_wstr(item["name"].get<std::string>());
-        std::string type = item["type"].get<std::string>();
+    json name_json = item["name"];
+    json value_json = item["value"];
+    json type_json = item["type"];
+
+    if (!name_json.is_null() && !value_json.is_null() && !type_json.is_null()) {
+        std::wstring name = Utils::Convert::str_to_wstr(name_json.get<std::string>());
+        std::string type = type_json.get<std::string>();
         if (type == "STRINGA") {
-            auto val = item["value"].get<std::string>();
+            auto val = value_json.get<std::string>();
             list.emplace_back(std::make_shared<sealighter_property_is<std::string>>(name, val));
         }
         else if (type == "STRINGW") {
-            auto val = Utils::Convert::str_to_wstr(item["value"].get<std::string>());
+            auto val = Utils::Convert::str_to_wstr(value_json.get<std::string>());
             list.emplace_back(std::make_shared<sealighter_property_is<std::wstring>>(name, val));
         }
         else if (type == "INT8") {
-            auto val = item["value"].get<std::int8_t>();
+            auto val = value_json.get<std::int8_t>();
             list.emplace_back(std::make_shared<sealighter_property_is<std::int8_t>>(name, val));
         }
         else if (type == "UINT8") {
-            auto val = item["value"].get<std::uint8_t>();
+            auto val = value_json.get<std::uint8_t>();
             list.emplace_back(std::make_shared<sealighter_property_is<std::uint8_t>>(name, val));
         }
         else if (type == "INT16") {
-            auto val = item["value"].get<std::int16_t>();
+            auto val = value_json.get<std::int16_t>();
             list.emplace_back(std::make_shared<sealighter_property_is<std::int16_t>>(name, val));
         }
         else if (type == "UINT16") {
-            auto val = item["value"].get<std::uint16_t>();
+            auto val = value_json.get<std::uint16_t>();
             list.emplace_back(std::make_shared<sealighter_property_is<std::uint16_t>>(name, val));
         }
         else if (type == "INT32") {
-            auto val = item["value"].get<std::int32_t>();
+            auto val = value_json.get<std::int32_t>();
             list.emplace_back(std::make_shared<sealighter_property_is<std::int32_t>>(name, val));
         }
         else if (type == "UINT32") {
-            auto val = item["value"].get<std::uint32_t>();
+            auto val = value_json.get<std::uint32_t>();
             list.emplace_back(std::make_shared<sealighter_property_is<std::uint32_t>>(name, val));
         }
         else if (type == "INT64") {
-            auto val = item["value"].get<std::int64_t>();
+            auto val = value_json.get<std::int64_t>();
             list.emplace_back(std::make_shared<sealighter_property_is<std::int64_t>>(name, val));
         }
         else if (type == "UINT64") {
-            auto val = item["value"].get<std::uint64_t>();
+            auto val = value_json.get<std::uint64_t>();
             list.emplace_back(std::make_shared<sealighter_property_is<std::uint64_t>>(name, val));
         }
     }
@@ -395,10 +403,15 @@ int add_filters
 {
     int status = ERROR_SUCCESS;
 
-    if (json_provider["filters"].is_null() ||
-        (json_provider["filters"]["any_of"].is_null() &&
-            json_provider["filters"]["all_of"].is_null() &&
-            json_provider["filters"]["none_of"].is_null()
+    json filters_json = json_provider["filters"];
+    json any_of_json = filters_json["any_of"];
+    json all_of_json = filters_json["all_of"];
+    json none_of_json = filters_json["none_of"];
+
+    if (filters_json.is_null() ||
+        (any_of_json.is_null() &&
+            all_of_json.is_null() &&
+            none_of_json.is_null()
             )
         ) {
         // No filters, log everything
@@ -411,26 +424,26 @@ int add_filters
         // Build top-level list
         // All 3 options will eventually be ANDed together
         std::vector<std::shared_ptr<predicates::details::predicate_base>> top_list;
-        if (!json_provider["filters"]["any_of"].is_null()) {
+        if (!any_of_json.is_null()) {
             Utils::log_message("    Filtering any of:\n");
             std::vector<std::shared_ptr<predicates::details::predicate_base>> list;
-            status = add_filters_to_vector(list, json_provider["filters"]["any_of"]);
+            status = add_filters_to_vector(list, any_of_json);
             if (ERROR_SUCCESS == status) {
                 top_list.emplace_back(std::make_shared<sealighter_any_of>(list));
             }
         }
-        if (ERROR_SUCCESS == status && !json_provider["filters"]["all_of"].is_null()) {
+        if (ERROR_SUCCESS == status && !all_of_json.is_null()) {
             Utils::log_message("    Filtering all of:\n");
             std::vector<std::shared_ptr<predicates::details::predicate_base>> list;
-            status = add_filters_to_vector(list, json_provider["filters"]["all_of"]);
+            status = add_filters_to_vector(list, all_of_json);
             if (ERROR_SUCCESS == status) {
                 top_list.emplace_back(std::make_shared<sealighter_all_of>(list));
             }
         }
-        if (ERROR_SUCCESS == status && !json_provider["filters"]["none_of"].is_null()) {
+        if (ERROR_SUCCESS == status && !none_of_json.is_null()) {
             Utils::log_message("    Filtering none of:\n");
             std::vector<std::shared_ptr<predicates::details::predicate_base>> list;
-            status = add_filters_to_vector(list, json_provider["filters"]["none_of"]);
+            status = add_filters_to_vector(list, none_of_json);
             if (ERROR_SUCCESS == status) {
                 top_list.emplace_back(std::make_shared<sealighter_none_of>(list));
             }
@@ -473,12 +486,18 @@ int add_kernel_traces
     // Add any Kernel providers
     try {
         for (json json_provider : json_config["kernel_traces"]) {
-            if (json_provider["provider_name"].is_null()) {
+            std::string trace_name;
+
+            if (json provider_name_json = json_provider["provider_name"];
+                provider_name_json.is_null()) {
                 Utils::log_message("Invalid Provider, missing provider name\n");
                 status = SEALIGHTER_ERROR_PARSE_KERNEL_PROVIDER;
                 break;
             }
-            provider_name = json_provider["provider_name"].get<std::string>();
+            else
+            {
+                provider_name = provider_name_json.get<std::string>();
+            }
 
             if (provider_name == "process") {
                 pNew_provider = new kernel::process_provider();
@@ -564,20 +583,26 @@ int add_kernel_traces
                 break;
             }
 
+            // If the current trace configuration has a "record_property_types" attribute, use it.
+            // Otherwise, use the global attribute.
+            bool record_property_types = record_property_types_default;
+            if (json record_property_types_json = json_provider["record_property_types"];
+                !record_property_types_json.is_null())
+                record_property_types = record_property_types_json.get<bool>();
+
             // Create context with trace name
-            if (json_provider["trace_name"].is_null()) {
+            if (json trace_name_json = json_provider["trace_name"];
+                trace_name_json.is_null())
+            {
                 Utils::log_message("Invalid Provider, missing trace name\n");
                 status = SEALIGHTER_ERROR_PARSE_KERNEL_PROVIDER;
                 break;
             }
+            else
+            {
+                trace_name = trace_name_json.get<std::string>();
+            }
 
-            // If the current trace configuration has a "record_property_types" attribute, use it.
-            // Otherwise, use the global attribute.
-            bool record_property_types = record_property_types_default;
-            if (!json_provider["record_property_types"].is_null())
-                record_property_types = json_provider["record_property_types"].get<bool>();
-
-            std::string trace_name = json_provider["trace_name"].get<std::string>();
             auto sealighter_context =
                 std::make_shared<sealighter_context_t>(trace_name, false, record_property_types);
             for (json json_buffers : json_provider["buffers"]) {
@@ -591,11 +616,11 @@ int add_kernel_traces
                 add_buffered_list(trace_name, buffer_list);
             }
 
-
             // Add any filters
             Utils::log_message("Kernel Provider: %s\n", provider_name.c_str());
             status = add_filters(pNew_provider, sealighter_context, json_provider);
-            if (ERROR_SUCCESS == status) {
+            if (ERROR_SUCCESS == status)
+            {
                 g_kernel_session->enable(*pNew_provider);
             }
             else {
@@ -619,7 +644,7 @@ int add_kernel_traces
 int add_user_traces
 (
     json json_config,
-    EVENT_TRACE_PROPERTIES  session_properties,
+    EVENT_TRACE_PROPERTIES session_properties,
     std::wstring session_name,
     bool record_property_types_default
 )
@@ -635,32 +660,47 @@ int add_user_traces
             provider<>* pNew_provider;
             std::wstring provider_name;
             std::string trace_name;
-            if (json_provider["provider_name"].is_null()) {
+
+            if (json provider_name_json = json_provider["provider_name"];
+                provider_name_json.is_null())
+            {
                 Utils::log_message("Invalid Provider\n");
                 status = SEALIGHTER_ERROR_PARSE_USER_PROVIDER;
                 break;
             }
+            else
+            {
+                provider_name = Utils::Convert::str_to_wstr(provider_name_json.get<std::string>());
+            }
 
-            if (json_provider["trace_name"].is_null()) {
+            if (json trace_name_json = json_provider["trace_name"];
+                trace_name_json.is_null())
+            {
                 Utils::log_message("Invalid Provider, missing trace name\n");
                 status = SEALIGHTER_ERROR_PARSE_KERNEL_PROVIDER;
                 break;
             }
-            trace_name = json_provider["trace_name"].get<std::string>();
+            else
+            {
+                trace_name = trace_name_json.get<std::string>();
+            }
 
             // If provider_name is a GUID, use that
             // Otherwise pass it off to Krabs to try to resolve
-            provider_name = Utils::Convert::str_to_wstr(json_provider["provider_name"].get<std::string>());
             provider_guid = Utils::Convert::wstr_to_guid(provider_name);
 
-            if (provider_guid != GUID_NULL) {
+            if (provider_guid != GUID_NULL)
+            {
                 pNew_provider = new provider<>(provider_guid);
             }
-            else {
-                try {
+            else
+            {
+                try
+                {
                     pNew_provider = new provider<>(provider_name);
                 }
-                catch (const std::exception& e) {
+                catch (const std::exception& e)
+                {
                     Utils::log_message("%s\n", e.what());
                     status = SEALIGHTER_ERROR_NO_PROVIDER;
                     break;
@@ -671,28 +711,38 @@ int add_user_traces
 
             // If no keywords_all or keywords_any is set
             // then set a default 'match anything'
-            if (json_provider["keywords_all"].is_null() && json_provider["keywords_any"].is_null()) {
+            if (json keywords_all_json = json_provider["keywords_all"],
+                     keywords_any_json = json_provider["keywords_any"];
+
+                keywords_all_json.is_null() && keywords_any_json.is_null())
+            {
                 Utils::log_message("    Keywords: All\n");
             }
-            else {
-                if (!json_provider["keywords_all"].is_null()) {
-                    uint64_t data = json_provider["keywords_all"].get<std::uint64_t>();
+            else
+            {
+                if (!keywords_all_json.is_null())
+                {
+                    uint64_t data = keywords_all_json.get<std::uint64_t>();
                     Utils::log_message("    Keywords All: 0x%llx\n", data);
                     pNew_provider->all(data);
                 }
 
-                if (!json_provider["keywords_any"].is_null()) {
-                    uint64_t data = json_provider["keywords_any"].get<std::uint64_t>();
+                if (!keywords_any_json.is_null())
+                {
+                    uint64_t data = keywords_any_json.get<std::uint64_t>();
                     Utils::log_message("    Keywords Any: 0x%llx\n", data);
                     pNew_provider->any(data);
                 }
             }
-            if (!json_provider["level"].is_null()) {
-                uint64_t data = json_provider["level"].get<std::uint64_t>();
+            if (json level_json = json_provider["level"];
+                !level_json.is_null())
+            {
+                uint64_t data = level_json.get<std::uint64_t>();
                 Utils::log_message("    Level: 0x%llx\n", data);
                 pNew_provider->level(data);
             }
-            else {
+            else
+            {
                 // Set Max Level
                 pNew_provider->level(0xff);
             }
@@ -701,15 +751,19 @@ int add_user_traces
             // a "trace_flags" property that doesn't actually show
             // the addditional info in the result. For more info, see:
             // https://learn.microsoft.com/en-us/windows/win32/api/evntrace/ns-evntrace-enable_trace_parameters
-            if (!json_provider["trace_flags"].is_null()) {
-                uint64_t data = json_provider["trace_flags"].get<std::uint64_t>();
+            if (json trace_flags_json = json_provider["trace_flags"];
+                !trace_flags_json.is_null())
+            {
+                uint64_t data = trace_flags_json.get<std::uint64_t>();
                 Utils::log_message("    Trace Flags: 0x%llx\n", data);
                 pNew_provider->trace_flags(data);
             }
 
             // Check if we want a stacktrace
             // This is just a helper option, you could also set this in the trace_flags
-            if (!json_provider["report_stacktrace"].is_null() && json_provider["report_stacktrace"].get<bool>()) {
+            if (json report_stacktrace_json = json_provider["report_stacktrace"];
+                !report_stacktrace_json.is_null() && report_stacktrace_json.get<bool>())
+            {
                 // Add the stacktrace trace flag
                 pNew_provider->trace_flags(pNew_provider->trace_flags() | EVENT_ENABLE_PROPERTY_STACK_TRACE);
             }
@@ -718,9 +772,12 @@ int add_user_traces
             // TODO: unite this and "record_property_types" into an enum
             // called ParsingMode or something.
             bool dump_raw_event = false;
-            if (!json_provider["dump_raw_event"].is_null()) {
-                dump_raw_event = json_provider["dump_raw_event"].get<bool>();
-                if (dump_raw_event) {
+            if (json dump_raw_event_json = json_provider["dump_raw_event"];
+                !dump_raw_event_json.is_null())
+            {
+                dump_raw_event = dump_raw_event_json.get<bool>();
+                if (dump_raw_event)
+                {
                     Utils::log_message("    Recording raw events\n");
                 }
             }
@@ -728,9 +785,10 @@ int add_user_traces
             // If the current trace configuration has a "record_property_types" attribute, use it.
             // Otherwise, use the global attribute.
             bool record_property_types = record_property_types_default;
-            if (!json_provider["record_property_types"].is_null())
+            if (json record_property_types_json = json_provider["record_property_types"];
+                !record_property_types_json.is_null())
             {
-                record_property_types = json_provider["record_property_types"].get<bool>();
+                record_property_types = record_property_types_json.get<bool>();
 
                 if (dump_raw_event && record_property_types)
                 {
@@ -855,68 +913,89 @@ int parse_config
         json json_props = json_config["session_properties"];
         if (!json_props.is_null())
         {
-            if (!json_props["session_name"].is_null()) {
-                session_name = Utils::Convert::str_to_wstr(json_props["session_name"].get<std::string>());
+            if (json session_name_json = json_props["session_name"];
+                !session_name_json.is_null())
+            {
+                session_name = Utils::Convert::str_to_wstr(session_name_json.get<std::string>());
                 Utils::log_message("Session Name: %S\n", session_name.c_str());
             }
 
-            if (!json_props["buffer_size"].is_null()) {
-                session_properties.BufferSize = json_props["buffer_size"].get<std::uint32_t>();
+            if (json buffer_size_json = json_props["buffer_size"];
+                !buffer_size_json.is_null())
+            {
+                session_properties.BufferSize = buffer_size_json.get<std::uint32_t>();
             }
 
-            if (!json_props["minimum_buffers"].is_null()) {
-                session_properties.MinimumBuffers =
-                    json_props["minimum_buffers"].get<std::uint32_t>();
+            if (json minimum_buffers_json = json_props["minimum_buffers"];
+                !minimum_buffers_json.is_null())
+            {
+                session_properties.MinimumBuffers = minimum_buffers_json.get<std::uint32_t>();
             }
 
-            if (!json_props["maximum_buffers"].is_null()) {
-                session_properties.MaximumBuffers =
-                    json_props["maximum_buffers"].get<std::uint32_t>();
+            if (json maximum_buffers_json = json_props["maximum_buffers"];
+                !maximum_buffers_json.is_null())
+            {
+                session_properties.MaximumBuffers = maximum_buffers_json.get<std::uint32_t>();
             }
 
-            if (!json_props["flush_timer"].is_null()) {
-                session_properties.FlushTimer =
-                    json_props["flush_timer"].get<std::uint32_t>();
+            if (json flush_timer_json = json_props["flush_timer"];
+                !flush_timer_json.is_null())
+            {
+                session_properties.FlushTimer = flush_timer_json.get<std::uint32_t>();
             }
 
-            if (!json_props["output_format"].is_null()) {
-                std::string format = json_props["output_format"].get<std::string>();
-                if ("stdout" == format) {
+            if (json output_format_json = json_props["output_format"];
+                !output_format_json.is_null())
+            {
+                std::string format = output_format_json.get<std::string>();
+                if ("stdout" == format)
+                {
                     set_output_format(Output_format::output_stdout);
                 }
-                else if ("event_log" == format) {
+                else if ("event_log" == format)
+                {
                     set_output_format(Output_format::output_event_log);
                 }
-                else if ("file" == format) {
-                    if (json_props["output_filename"].is_null()) {
+                else if ("file" == format)
+                {
+                    if (json output_filename_json = json_props["output_filename"];
+                        output_filename_json.is_null())
+                    {
                         Utils::log_message("When output_format == 'file', also set 'output_filename'\n");
                         status = SEALIGHTER_ERROR_OUTPUT_FILE;
                     }
-                    else {
+                    else
+                    {
                         //g_output_format = Output_format::output_file;
                         set_output_format(Output_format::output_file);
-                        status = setup_logger_file(json_props["output_filename"].get<std::string>());
+                        status = setup_logger_file(output_filename_json.get<std::string>());
                     }
                 }
-                else {
+                else
+                {
                     Utils::log_message("Invalid output_format\n");
                     status = SEALIGHTER_ERROR_OUTPUT_FORMAT;
                 }
                 Utils::log_message("Outputs: %s\n", format.c_str());
             }
 
-            if (!json_props["buffering_timout_seconds"].is_null()) {
-                auto timeout = json_props["buffering_timout_seconds"].get<std::uint32_t>();
+            if (json buffering_timout_seconds_json = json_props["buffering_timout_seconds"];
+                !buffering_timout_seconds_json.is_null())
+            {
+                auto timeout = buffering_timout_seconds_json.get<std::uint32_t>();
                 set_buffer_lists_timeout(timeout);
             }
 
-            if (!json_props["stop_event"].is_null()) {
-                auto trace_stop_event_name = json_props["stop_event"].get<std::string>();
+            if (json stop_event_json = json_props["stop_event"];
+                !stop_event_json.is_null())
+            {
+                auto trace_stop_event_name = stop_event_json.get<std::string>();
                 status = start_event_listener_thread(trace_stop_event_name);
             }
 
-            if (!json_props["record_property_types"].is_null())
-                record_property_types = json_props["record_property_types"].get<bool>();
+            if (json record_property_types_json = json_props["record_property_types"];
+                !record_property_types_json.is_null())
+                record_property_types = record_property_types_json.get<bool>();
         }
     }
     catch (const nlohmann::detail::exception& e) {
@@ -925,18 +1004,26 @@ int parse_config
         status = SEALIGHTER_ERROR_PARSE_CONFIG_PROPS;
     }
 
-    if (ERROR_SUCCESS == status) {
-        if (json_config["user_traces"].is_null() && json_config["kernel_traces"].is_null()) {
+    if (ERROR_SUCCESS == status)
+    {
+        if (json user_traces_json = json_config["user_traces"],
+            kernel_traces_json = json_config["kernel_traces"];
+
+            user_traces_json.is_null() && kernel_traces_json.is_null())
+        {
             Utils::log_message("No User or Kernel providers in config file\n");
             status = SEALIGHTER_ERROR_PARSE_NO_PROVIDERS;
         }
-        else {
-            if (!json_config["user_traces"].is_null()) {
+        else
+        {
+            if (!user_traces_json.is_null())
+            {
                 status = add_user_traces(json_config, session_properties, session_name, record_property_types);
             }
 
             // Add kernel providers if needed
-            if (ERROR_SUCCESS == status && !json_config["kernel_traces"].is_null()) {
+            if (ERROR_SUCCESS == status && !kernel_traces_json.is_null())
+            {
                 status = add_kernel_traces(json_config, session_properties, record_property_types);
             }
         }
@@ -952,7 +1039,7 @@ int parse_config
 template <typename T>
 void run_trace(trace<T>* trace)
 {
-    if (NULL != trace) {
+    if (NULL != trace){
         // Ensure we always stop the trace afterwards
         try {
             trace->start();
