@@ -697,6 +697,10 @@ int add_user_traces
                 pNew_provider->level(0xff);
             }
 
+            // TODO: support each trace flag individually instead of having
+            // a "trace_flags" property that doesn't actually show
+            // the addditional info in the result. For more info, see:
+            // https://learn.microsoft.com/en-us/windows/win32/api/evntrace/ns-evntrace-enable_trace_parameters
             if (!json_provider["trace_flags"].is_null()) {
                 uint64_t data = json_provider["trace_flags"].get<std::uint64_t>();
                 Utils::log_message("    Trace Flags: 0x%llx\n", data);
@@ -711,6 +715,8 @@ int add_user_traces
             }
 
             // Check if we're dumping the raw event, or attempting to parse it
+            // TODO: unite this and "record_property_types" into an enum
+            // called ParsingMode or something.
             bool dump_raw_event = false;
             if (!json_provider["dump_raw_event"].is_null()) {
                 dump_raw_event = json_provider["dump_raw_event"].get<bool>();
@@ -995,6 +1001,7 @@ int run_sealighter
     int status = ERROR_SUCCESS;
 
     // Setup Event Logging
+    // TODO: use this only if the configuration specifies logging to event log
     status = EventRegisterSealighter();
     if (ERROR_SUCCESS != status) {
         Utils::log_message("Error registering event log: %ul\n", status);
