@@ -389,7 +389,7 @@ template <typename T>
 int add_filters
 (
     details::base_provider<T>* pNew_provider,
-    std::shared_ptr<struct sealighter_context_t> sealighter_context,
+    std::shared_ptr<sealighter_context_t> sealighter_context,
     json json_provider
 )
 {
@@ -579,7 +579,7 @@ int add_kernel_traces
 
             std::string trace_name = json_provider["trace_name"].get<std::string>();
             auto sealighter_context =
-                std::make_shared<struct sealighter_context_t>(trace_name, false, record_property_types);
+                std::make_shared<sealighter_context_t>(trace_name, false, record_property_types);
             for (json json_buffers : json_provider["buffers"]) {
                 auto event_id = json_buffers["event_id"].get<std::uint32_t>();
                 auto max = json_buffers["max_before_buffering"].get<std::uint32_t>();
@@ -737,11 +737,11 @@ int add_user_traces
             // Create context with trace name
 
             auto sealighter_context =
-                std::make_shared<struct sealighter_context_t>(trace_name, dump_raw_event, record_property_types);
+                std::make_shared<sealighter_context_t>(trace_name, dump_raw_event, record_property_types);
             for (json json_buffers : json_provider["buffers"]) {
                 auto event_id = json_buffers["event_id"].get<std::uint32_t>();
                 auto max = json_buffers["max_before_buffering"].get<std::uint32_t>();
-                auto buffer_list = event_buffer_list_t(event_id, max);
+                event_buffer_list_t buffer_list(event_id, max);
                 for (json json_buff_prop : json_buffers["properties_to_match"]) {
                     buffer_list.properties_to_compare.push_back(json_buff_prop.get<std::string>());
                 }

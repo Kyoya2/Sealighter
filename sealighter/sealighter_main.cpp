@@ -26,7 +26,7 @@ int main
         Utils::log_message("Error: Config file doesn't exist\n");
         return SEALIGHTER_ERROR_MISSING_CONFIG;
     }
-    std::ifstream  config_stream(config_path);
+    std::ifstream config_stream(config_path);
     std::string config_string((std::istreambuf_iterator<char>(config_stream)),
         (std::istreambuf_iterator<char>()));
     config_stream.close();

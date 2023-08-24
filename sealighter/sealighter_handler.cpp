@@ -25,7 +25,7 @@ static std::mutex g_print_mutex;
 static Output_format g_output_format;
 
 // Hold data for buffering
-static std::map<std::string, std::vector< event_buffer_list_t>> g_buffer_lists;
+static std::map<std::string, std::vector<event_buffer_list_t>> g_buffer_lists;
 // Default to 30 seconds
 static std::uint32_t g_buffer_lists_timeout_seconds = 5;
 static std::mutex g_buffer_lists_mutex;
@@ -117,7 +117,7 @@ json parse_event_to_json
 (
     const EVENT_RECORD& record,
     const trace_context&,
-    std::shared_ptr<struct sealighter_context_t> sealighter_context,
+    std::shared_ptr<sealighter_context_t> sealighter_context,
     krabs::schema schema
 )
 {
@@ -383,7 +383,7 @@ void handle_event_context
 (
     const EVENT_RECORD& record,
     const trace_context& trace_context,
-    std::shared_ptr<struct sealighter_context_t> sealighter_context
+    std::shared_ptr<sealighter_context_t> sealighter_context
 )
 {
     json json_event;
@@ -453,7 +453,7 @@ void handle_event
     const trace_context& trace_context
 )
 {
-    auto dummy_context = std::make_shared<struct sealighter_context_t>("", false, true);
+    auto dummy_context = std::make_shared<sealighter_context_t>("", false, true);
     handle_event_context(record, trace_context, dummy_context);
 }
 

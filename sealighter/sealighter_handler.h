@@ -68,7 +68,7 @@ void handle_event_context
 (
     const EVENT_RECORD& record,
     const trace_context& trace_context,
-    std::shared_ptr<struct sealighter_context_t> event_context
+    std::shared_ptr<sealighter_context_t> event_context
 );
 
 
