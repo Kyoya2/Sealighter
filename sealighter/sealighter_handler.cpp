@@ -1,8 +1,8 @@
 #include "krabs.hpp"
 #include "sealighter_handler.h"
-#include "sealighter_errors.h"
 #include "sealighter_util.h"
 #include "sealighter_provider.h"
+#include "sealighter_exception.h"
 
 #include <fstream>
 #include <mutex>
@@ -61,35 +61,33 @@ void threaded_print_ln
 */
 void write_event_log
 (
-    json            json_event,
-    std::string     trace_name,
-    std::string     event_string
+    const json& json_event,
+    std::string event_string
 )
 {
-    DWORD status = ERROR_SUCCESS;
+    const json header_json = json_event.at("header");
 
     // TODO: Make sure we didn't break this
     // Also fix up schema, no need to to all the str_wstr converting
     // Also fix up timestamp string
-    status = EventWriteSEALIGHTER_REPORT_EVENT(
+    DWORD status = EventWriteSEALIGHTER_REPORT_EVENT(
         event_string.c_str(),
-        json_event["header"]["activity_id"].get<std::string>().c_str(),
-        (USHORT)json_event["header"]["event_flags"].get<std::uint32_t>(),
-        (USHORT)json_event["header"]["event_id"].get<std::uint32_t>(),
-        Utils::Convert::str_to_wstr(json_event["header"]["event_name"].get<std::string>()).c_str(),
-        (UCHAR)json_event["header"]["event_opcode"].get<std::uint32_t>(),
-        (UCHAR)json_event["header"]["event_version"].get<std::uint32_t>(),
-        json_event["header"]["process_id"].get<std::uint32_t>(),
-        Utils::Convert::str_to_wstr(json_event["header"]["provider_name"].get<std::string>()).c_str(),
-        Utils::Convert::str_to_wstr(json_event["header"]["task_name"].get<std::string>()).c_str(),
-        json_event["header"]["thread_id"].get<std::uint32_t>(),
+        header_json.at("activity_id").get<std::string>().c_str(),
+        (USHORT)header_json.at("event_flags").get<std::uint32_t>(),
+        (USHORT)header_json.at("event_id").get<std::uint32_t>(),
+        Utils::Convert::str_to_wstr(header_json.at("event_name").get<std::string>()).c_str(),
+        (UCHAR)header_json.at("event_opcode").get<std::uint32_t>(),
+        (UCHAR)header_json.at("event_version").get<std::uint32_t>(),
+        header_json.at("process_id").get<std::uint32_t>(),
+        Utils::Convert::str_to_wstr(header_json.at("provider_name").get<std::string>()).c_str(),
+        Utils::Convert::str_to_wstr(header_json.at("task_name").get<std::string>()).c_str(),
+        header_json.at("thread_id").get<std::uint32_t>(),
         0,  // schema.timestamp().quadPart
-        trace_name.c_str()
+        header_json.at("trace_name").get<std::string>().c_str()
     );
 
     if (status != ERROR_SUCCESS) {
-        Utils::log_message("Error %ul line %d\n", status, __LINE__);
-        return;
+        throw SealighterException("Failed to report event, error %ul", status);
     }
 }
 
@@ -352,14 +350,13 @@ case property_type:                                                        \
 
 void output_json_event
 (
-    json json_event
+    const json& json_event
 )
 {
     // If writing to a file, don't pretty print
     // This makes it 1 line per event
     bool pretty_print = (Output_format::output_file != g_output_format);
     std::string event_string = Utils::Convert::json_to_string(json_event, pretty_print);
-    std::string trace_name = json_event["header"]["trace_name"];
 
     // Log event if we successfully parsed it
     if (!event_string.empty()) {
@@ -369,7 +366,7 @@ void output_json_event
             threaded_print_ln(event_string);
             break;
         case output_event_log:
-            write_event_log(json_event, trace_name, event_string);
+            write_event_log(json_event, event_string);
             break;
         case output_file:
             threaded_write_file_ln(event_string);
@@ -458,17 +455,14 @@ void handle_event
 }
 
 
-int setup_logger_file
+void setup_logger_file
 (
     std::string filename
 )
 {
     g_outfile.open(filename.c_str(), std::ios::out | std::ios::app);
-    if (g_outfile.good()) {
-        return ERROR_SUCCESS;
-    }
-    else {
-        return SEALIGHTER_ERROR_OUTPUT_FILE;
+    if (!g_outfile.good()) {
+        throw SealighterException("Failed to open output file '%s'", filename.c_str());
     }
 }
 

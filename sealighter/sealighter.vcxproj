@@ -105,7 +105,7 @@
   <ItemGroup>
     <ClInclude Include="..\json\single_include\nlohmann\json.hpp" />
     <ClInclude Include="sealighter_controller.h" />
-    <ClInclude Include="sealighter_errors.h" />
+    <ClInclude Include="sealighter_exception.h" />
     <ClInclude Include="sealighter_json.h" />
     <ClInclude Include="sealighter_predicates.h" />
     <ClInclude Include="sealighter_handler.h" />

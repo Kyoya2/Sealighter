@@ -2,36 +2,35 @@
 #include <fstream>
 #include <string>
 #include "sealighter_handler.h"
-#include "sealighter_errors.h"
 #include "sealighter_util.h"
 #include "sealighter_controller.h"
-/*
-    Main entrypoint
-*/
+#include "sealighter_exception.h"
+
 int main
 (
     int argc,
     char* argv[]
 )
 {
-    int status = 0;
-    if (2 != argc) {
-        Utils::log_message("usage: %s <config_file>\n", argv[0]);
-        return SEALIGHTER_ERROR_NOCONFIG;
+    try
+    {
+        if (2 != argc) {
+            throw SealighterException("Usage: sealighter.exe <config_file>");
+        }
+
+        std::string config_path = argv[1];
+
+        std::ifstream config_stream(config_path);
+        std::string config_string((std::istreambuf_iterator<char>(config_stream)),
+            (std::istreambuf_iterator<char>()));
+        config_stream.close();
+
+        run_sealighter(config_string);
+    }
+    catch (const std::exception& e)
+    {
+        Utils::log_message("%s", e.what());
     }
 
-    std::string config_path = argv[1];
-
-    if (!Utils::file_exists(config_path)) {
-        Utils::log_message("Error: Config file doesn't exist\n");
-        return SEALIGHTER_ERROR_MISSING_CONFIG;
-    }
-    std::ifstream config_stream(config_path);
-    std::string config_string((std::istreambuf_iterator<char>(config_stream)),
-        (std::istreambuf_iterator<char>()));
-    config_stream.close();
-
-    status = run_sealighter(config_string);
-
-    return status;
+    return 0;
 }

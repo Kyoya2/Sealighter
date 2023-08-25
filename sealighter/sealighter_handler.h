@@ -86,7 +86,7 @@ enum Output_format
 /*
     Create stream to write to output file
 */
-int setup_logger_file
+void setup_logger_file
 (
     std::string filename
 );

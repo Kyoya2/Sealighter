@@ -4,7 +4,7 @@
 /*
  * Start Sealighter
  */
-int run_sealighter
+void run_sealighter
 (
     std::string config_string
 );
