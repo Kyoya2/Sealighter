@@ -1,0 +1,19 @@
+## High-level
+### Features
+- Add "stop_event" configuration option
+- Add "record_property_types" configuration option.
+
+### Fixes
+- Fix timestamp without time-zone (issue #21).
+
+## Low-level
+- Update "krabsETW" submodule to latest version.
+- Update "json" submodule to latest version.
+- Remove redundant project dependency `Microsoft.O365.Security.Native.ETW`, speeds up compilation time and removes the need for .NET framework.
+- Remove redundant dependency on MFC libraries.
+- Use the C++17 standard.
+- Use `std::make_shared<Object<TParams...>>(...)` instead of `std::shared_ptr<Object<TParams...>>(new Object<TParams...>(...))` everywhere.
+- Fix incorrect `string` <-> `wstring` convertions on non-English languages.
+- Support parsing for many more property types.
+- Use exceptions instead of statuses.
+- Optimize configuration parsing times by using non-mutable JSON objects passed by reference.
