@@ -4,6 +4,7 @@ x64/
 packages/
 sealighter/x64
 *.vcxproj.user
+*.aps
 
 # Some testing might create this file:
 out.json
