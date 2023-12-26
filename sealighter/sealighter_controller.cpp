@@ -533,6 +533,9 @@ void add_kernel_traces
         else if (provider_name == "object_manager") {
             pNew_provider = new kernel::object_manager_provider();
         }
+        else if (provider_name == "timer") {
+            pNew_provider = new kernel::timer_provider();
+        }
         else {
             throw SealighterException("Invalid kernel provider '%s'", provider_name.c_str());
         }
